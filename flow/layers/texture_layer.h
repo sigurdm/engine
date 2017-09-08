@@ -14,13 +14,16 @@ class TextureLayer : public Layer {
   TextureLayer();
   ~TextureLayer() override;
 
-  void set_rect(const SkRect& rect) { rect_ = rect; }
+  void set_offset(const SkPoint& offset) { offset_ = offset; }
+  void set_size(const SkSize& size) { size_ = size; }
   void set_texture_id(uint32_t texture_id) { texture_id_ = texture_id; }
 
+  void Preroll(PrerollContext* context, const SkMatrix& matrix) override;
   void Paint(PaintContext& context) override;
 
  private:
-  SkRect rect_;
+  SkPoint offset_;
+  SkSize size_;
   uint32_t texture_id_ = 0;
 
   FTL_DISALLOW_COPY_AND_ASSIGN(TextureLayer);
