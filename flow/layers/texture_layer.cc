@@ -56,8 +56,11 @@ void TextureLayer::Paint(PaintContext& context) {
     canvas->flush();
     image = surface->makeImageSnapshot();
     printPixels(image);
+     // TODO(mravn): Keeps image and its texture alive until (and after!) canvas drawing has flushed.
+    image->ref();
     GrBackendObject backendObject = image->getTextureHandle(true);
     textureInfo = reinterpret_cast<GrGLTextureInfo*>(backendObject);
+
     FTL_DLOG(INFO) << "Signalling IO thread task completed with texture ID " << textureInfo->fID;
     latch.Signal();
   });
@@ -74,11 +77,8 @@ void TextureLayer::Paint(PaintContext& context) {
        SkAlphaType::kPremul_SkAlphaType,
        info.refColorSpace()
     );
-    sk_sp<SkImage> image3 = image2->makeNonTextureImage();
-    FTL_DLOG(INFO) << "image from texture: " << image3;
-    printPixels(image3);
+    FTL_DLOG(INFO) << "image from texture: " << image2;
     context.canvas.drawImage(image2, x, y);
-    context.canvas.flush();
   }
 }
 
