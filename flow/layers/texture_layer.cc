@@ -56,7 +56,8 @@ void TextureLayer::Paint(PaintContext& context) {
     canvas->flush();
     image = surface->makeImageSnapshot();
     printPixels(image);
-     // TODO(mravn): Keeps image and its texture alive until (and after!) canvas drawing has flushed.
+     // TODO(mravn): Keeps image and its texture alive until (and after!) canvas
+     // drawing in line 82 has flushed.
     image->ref();
     GrBackendObject backendObject = image->getTextureHandle(true);
     textureInfo = reinterpret_cast<GrGLTextureInfo*>(backendObject);
