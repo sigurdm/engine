@@ -4,12 +4,22 @@
 
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
 #include "flutter/common/settings.h"
+#include "flutter/common/threads.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 #include "flutter/fml/platform/android/scoped_java_ref.h"
 #include "flutter/runtime/dart_service_isolate.h"
 #include "lib/ftl/arraysize.h"
 #include "lib/ftl/logging.h"
+#include "third_party/skia/include/gpu/GrTexture.h"
+#include "third_party/skia/include/core/SkSurface.h"
+#include "flutter/lib/ui/painting/resource_context.h"
+#include "third_party/skia/include/gpu/GrTypes.h"
+#include "third_party/skia/include/gpu/GrBackendSurface.h"
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES/gl.h>
+#include <GLES/glext.h>
 
 #define PLATFORM_VIEW (*reinterpret_cast<std::shared_ptr<PlatformViewAndroid>*>(platform_view))
 
@@ -55,6 +65,19 @@ void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj) {
   FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
 }
 
+// sk_sp<SkSurface> surface;
+jlong texName = 0;
+bool surfaceUpdated = false;
+fml::jni::JavaObjectWeakGlobalRef flutter_view;
+
+static jmethodID g_update_tex_image_method = nullptr;
+void FlutterViewUpdateTexImage(jlong texName) {
+  JNIEnv* env = fml::jni::AttachCurrentThread();
+  fml::jni::ScopedJavaLocalRef<jobject> view = flutter_view.get(env);
+  env->CallVoidMethod(view.obj(), g_update_tex_image_method, texName);
+  FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
+}
+
 // Called By Java
 
 static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
@@ -63,7 +86,8 @@ static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
   // Create a weak reference to the flutterView Java object so that we can make
   // calls into it later.
   view->Attach();
-  view->set_flutter_view(fml::jni::JavaObjectWeakGlobalRef(env, flutterView));
+  flutter_view = fml::jni::JavaObjectWeakGlobalRef(env, flutterView);
+  view->set_flutter_view(flutter_view);
   return reinterpret_cast<jlong>(storage);
 }
 
@@ -193,6 +217,36 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return blink::Settings::Get().enable_software_rendering;
 }
 
+
+static jlong AllocateSharedTexture(JNIEnv* env, jobject jcaller) {
+  ftl::AutoResetWaitableEvent latch;
+  blink::Threads::IO()->PostTask([&latch]() {
+    FTL_DLOG(INFO) << "Allocating texture id";
+//    SkImageInfo info = SkImageInfo::MakeN32(128, 64, SkAlphaType::kPremul_SkAlphaType);
+//    surface = SkSurface::MakeRenderTarget(blink::ResourceContext::Get(), SkBudgeted::kYes, info);
+//
+//    GrBackendObject backendObject = surface->getTextureHandle(SkSurface::kDiscardWrite_BackendHandleAccess);
+//    GrGLTextureInfo* textureInfo = reinterpret_cast<GrGLTextureInfo*>(backendObject);
+//    texName = textureInfo->fID;
+    GrGLuint texID;
+    glGenTextures(1, &texID);
+
+    glBindTexture(GL_TEXTURE_EXTERNAL_OES, texID);
+    texName = texID;
+    latch.Signal();
+  });
+  latch.Wait();
+  FTL_DLOG(INFO) << "Allocated texture id: " << texName;
+  return texName;
+}
+
+static void MarkSharedTextureDirty(JNIEnv* env, jobject jcaller, jlong texName) {
+    blink::Threads::IO()->PostTask([texName]() {
+      FTL_DLOG(INFO) << "marking surface updated: " << texName;
+      surfaceUpdated = true;
+    });
+}
+
 static void InvokePlatformMessageResponseCallback(JNIEnv* env,
                                                   jobject jcaller,
                                                   jlong platform_view,
@@ -318,6 +372,17 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .signature = "()Z",
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
+      {
+         .name = "nativeAllocateSharedTexture",
+         .signature = "()J",
+     .fnPtr = reinterpret_cast<void*>(&shell::AllocateSharedTexture),
+      },
+      {
+         .name = "nativeMarkSharedTextureDirty",
+         .signature = "(J)V",
+     .fnPtr = reinterpret_cast<void*>(&shell::MarkSharedTextureDirty),
+      },
+
   };
 
   if (env->RegisterNatives(g_flutter_view_class->obj(), methods,
@@ -352,6 +417,13 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
       env->GetMethodID(g_flutter_view_class->obj(), "onFirstFrame", "()V");
 
   if (g_on_first_frame_method == nullptr) {
+    return false;
+  }
+
+  g_update_tex_image_method =
+      env->GetMethodID(g_flutter_view_class->obj(), "updateTexImage", "(J)V");
+
+  if (g_update_tex_image_method == nullptr) {
     return false;
   }
   return true;

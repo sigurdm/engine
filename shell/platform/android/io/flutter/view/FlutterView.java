@@ -16,6 +16,9 @@ import android.graphics.Rect;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Matrix;
+import android.graphics.SurfaceTexture;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -105,9 +108,16 @@ public class FlutterView extends SurfaceView
     private final List<FirstFrameListener> mFirstFrameListeners;
     private long mNativePlatformView;
     private boolean mIsSoftwareRenderingEnabled = false; // using the software renderer or not
+    private MediaPlayer mMediaPlayer;
+    private SurfaceTexture surfaceTexture;
 
     public FlutterView(Context context) {
         this(context, null);
+    }
+
+    public void updateTexImage(long texName) {
+        Log.e(TAG, Thread.currentThread() + " updateTexImage " + texName);
+        surfaceTexture.updateTexImage();
     }
 
     public FlutterView(Context context, AttributeSet attrs) {
@@ -132,12 +142,33 @@ public class FlutterView extends SurfaceView
         }
         // TODO(abarth): Consider letting the developer override this color.
         final int backgroundColor = color;
-
+        Log.e(TAG, "FlutterView " + Thread.currentThread());
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 assertAttached();
                 nativeSurfaceCreated(mNativePlatformView, holder.getSurface(), backgroundColor);
+                final long texName = nativeAllocateSharedTexture();
+                Log.e(TAG, "Got texName " + texName);
+                surfaceTexture = new SurfaceTexture((int)texName);
+                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+                    @Override
+                    public void onFrameAvailable(SurfaceTexture texture) {
+                        Log.e(TAG, "frame available!!! " + texName);
+                        nativeMarkSharedTextureDirty(texName);
+                    }
+                });
+                try {
+                    mMediaPlayer = new MediaPlayer();
+                    mMediaPlayer.setDataSource("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_5mb.mp4");
+                    mMediaPlayer.setSurface(new Surface(surfaceTexture));
+                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    mMediaPlayer.prepare();
+                    mMediaPlayer.setLooping(true);
+                    mMediaPlayer.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -651,6 +682,10 @@ public class FlutterView extends SurfaceView
         long nativePlatformViewAndroid, int responseId);
 
     private static native boolean nativeGetIsSoftwareRenderingEnabled();
+
+    private static native long nativeAllocateSharedTexture();
+
+    private static native void nativeMarkSharedTextureDirty(long texName);
 
     private void updateViewportMetrics() {
         if (!isAttached())

@@ -11,6 +11,10 @@
 
 namespace shell {
 
+extern jlong texName;
+extern bool surfaceUpdated;
+extern fml::jni::JavaObjectWeakGlobalRef flutter_view;
+
 void FlutterViewHandlePlatformMessage(JNIEnv* env,
                                       jobject obj,
                                       jstring channel,
@@ -28,6 +32,8 @@ void FlutterViewUpdateSemantics(JNIEnv* env,
                                 jobjectArray strings);
 
 void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj);
+
+void FlutterViewUpdateTexImage(jlong texName);
 
 }  // namespace shell
 
