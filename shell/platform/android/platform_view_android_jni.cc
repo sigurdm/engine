@@ -14,6 +14,7 @@
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/core/SkSurface.h"
 #include "flutter/lib/ui/painting/resource_context.h"
+#include "flutter/flow/layers/texture_layer.h"
 #include "third_party/skia/include/gpu/GrTypes.h"
 #include "third_party/skia/include/gpu/GrBackendSurface.h"
 #include <EGL/egl.h>
@@ -65,19 +66,6 @@ void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj) {
   FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
 }
 
-// sk_sp<SkSurface> surface;
-jlong texName = 0;
-bool surfaceUpdated = false;
-fml::jni::JavaObjectWeakGlobalRef flutter_view;
-
-static jmethodID g_update_tex_image_method = nullptr;
-void FlutterViewUpdateTexImage(jlong texName) {
-  JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> view = flutter_view.get(env);
-  env->CallVoidMethod(view.obj(), g_update_tex_image_method, texName);
-  FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
-}
-
 // Called By Java
 
 static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
@@ -86,8 +74,8 @@ static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
   // Create a weak reference to the flutterView Java object so that we can make
   // calls into it later.
   view->Attach();
-  flutter_view = fml::jni::JavaObjectWeakGlobalRef(env, flutterView);
-  view->set_flutter_view(flutter_view);
+  flow::flutter_view = fml::jni::JavaObjectWeakGlobalRef(env, flutterView);
+  view->set_flutter_view(flow::flutter_view);
   return reinterpret_cast<jlong>(storage);
 }
 
@@ -221,29 +209,20 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
 static jlong AllocateSharedTexture(JNIEnv* env, jobject jcaller) {
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([&latch]() {
-    FTL_DLOG(INFO) << "Allocating texture id";
-//    SkImageInfo info = SkImageInfo::MakeN32(128, 64, SkAlphaType::kPremul_SkAlphaType);
-//    surface = SkSurface::MakeRenderTarget(blink::ResourceContext::Get(), SkBudgeted::kYes, info);
-//
-//    GrBackendObject backendObject = surface->getTextureHandle(SkSurface::kDiscardWrite_BackendHandleAccess);
-//    GrGLTextureInfo* textureInfo = reinterpret_cast<GrGLTextureInfo*>(backendObject);
-//    texName = textureInfo->fID;
     GrGLuint texID;
     glGenTextures(1, &texID);
 
     glBindTexture(GL_TEXTURE_EXTERNAL_OES, texID);
-    texName = texID;
+    flow::texName = texID;
     latch.Signal();
   });
   latch.Wait();
-  FTL_DLOG(INFO) << "Allocated texture id: " << texName;
-  return texName;
+  return flow::texName;
 }
 
 static void MarkSharedTextureDirty(JNIEnv* env, jobject jcaller, jlong texName) {
-    blink::Threads::IO()->PostTask([texName]() {
-      FTL_DLOG(INFO) << "marking surface updated: " << texName;
-      surfaceUpdated = true;
+    blink::Threads::IO()->PostTask([]() {
+      flow::surfaceUpdated = true;
     });
 }
 
@@ -420,10 +399,10 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     return false;
   }
 
-  g_update_tex_image_method =
+  flow::g_update_tex_image_method =
       env->GetMethodID(g_flutter_view_class->obj(), "updateTexImage", "(J)V");
 
-  if (g_update_tex_image_method == nullptr) {
+  if (flow::g_update_tex_image_method == nullptr) {
     return false;
   }
   return true;

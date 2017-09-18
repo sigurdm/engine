@@ -46,6 +46,7 @@ shared_library("flutter_shell_native") {
     "//flutter/shell/gpu",
     "//garnet/public/lib/ftl",
     "//third_party/skia",
+    "//third_party/skia:gpu",
   ]
   if (flutter_runtime_mode == "debug") {
     deps += [ "//dart/runtime:libdart_jit" ]

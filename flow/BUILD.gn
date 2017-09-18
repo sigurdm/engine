@@ -61,6 +61,7 @@ source_set("flow") {
     "//flutter/synchronization",
     "//third_party/skia",
     "//third_party/skia:gpu",
+    "//flutter/fml:fml",
   ]
 
   if (is_fuchsia) {

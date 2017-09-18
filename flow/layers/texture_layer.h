@@ -5,14 +5,23 @@
 #ifndef FLUTTER_FLOW_LAYERS_TEXTURE_LAYER_H_
 #define FLUTTER_FLOW_LAYERS_TEXTURE_LAYER_H_
 
+#include <jni.h>
 #include "flutter/flow/layers/layer.h"
 #include "third_party/skia/include/gpu/GrTypes.h"
 #include "third_party/skia/include/gpu/GrBackendSurface.h"
 #include "third_party/skia/include/gpu/GrContext.h"
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/core/SkSurface.h"
+#include "flutter/fml/platform/android/jni_weak_ref.h"
+#include "flutter/fml/platform/android/scoped_java_ref.h"
+#include "flutter/fml/platform/android/jni_util.h"
 
 namespace flow {
+
+extern jmethodID g_update_tex_image_method;
+extern jlong texName;
+extern bool surfaceUpdated;
+extern fml::jni::JavaObjectWeakGlobalRef flutter_view;
 
 class TextureLayer : public Layer {
  public:

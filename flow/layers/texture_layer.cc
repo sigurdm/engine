@@ -9,10 +9,8 @@
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/core/SkSurface.h"
 #include "third_party/skia/include/core/SkMatrix.h"
-#include "flutter/lib/ui/painting/resource_context.h"
 #include "flutter/common/threads.h"
 #include "lib/ftl/synchronization/waitable_event.h"
-#include "flutter/shell/platform/android/platform_view_android_jni.h"
 
 namespace flow {
 
@@ -32,10 +30,21 @@ void printPixels(sk_sp<SkImage> image) {
   FTL_DLOG(INFO) << "First pixel: " << pixel;
 }
 
-void TextureLayer::Paint(PaintContext& context) {
-  FTL_DLOG(INFO) << "Painting texture layer!";
+jmethodID g_update_tex_image_method = nullptr;
+void FlutterViewUpdateTexImage(jlong texName) {
+  JNIEnv* env = fml::jni::AttachCurrentThread();
+  fml::jni::ScopedJavaLocalRef<jobject> view = flow::flutter_view.get(env);
+  env->CallVoidMethod(view.obj(), g_update_tex_image_method, texName);
+  FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
+}
 
-  if (shell::texName == 0) {
+jlong texName = 0;
+bool surfaceUpdated = false;
+fml::jni::JavaObjectWeakGlobalRef flutter_view;
+
+void TextureLayer::Paint(PaintContext& context) {
+
+  if (texName == 0) {
     FTL_DLOG(INFO) << "No texName!";
     return;
   }
@@ -48,18 +57,14 @@ void TextureLayer::Paint(PaintContext& context) {
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([&latch]() {
     ASSERT_IS_IO_THREAD;
-    FTL_DLOG(INFO) << "IO thread task running...";
-    std::string string = "blah_texture";
-    if (shell::surfaceUpdated) {
-      shell::surfaceUpdated = false;
-      shell::FlutterViewUpdateTexImage(shell::texName);
+    if (surfaceUpdated) {
+      surfaceUpdated = false;
+      FlutterViewUpdateTexImage(texName);
       firstFrameSeen = true;
     }
 
-    FTL_DLOG(INFO) << "Signalling IO thread task completed with texture ID " << shell::texName;
     latch.Signal();
   });
-  FTL_DLOG(INFO) << "Waiting for IO thread task...";
   latch.Wait();
 
   if (!firstFrameSeen) {
@@ -67,7 +72,7 @@ void TextureLayer::Paint(PaintContext& context) {
     return;
   }
   SkImageInfo info = SkImageInfo::MakeN32(128, 64, SkAlphaType::kPremul_SkAlphaType);
-  GrGLTextureInfo textureInfo = {0x8D65, (uint)shell::texName};
+  GrGLTextureInfo textureInfo = {0x8D65, (uint)texName};
 
   GrBackendTexture backendTexture(paint_bounds().width(), paint_bounds().height(), kRGBA_8888_GrPixelConfig, textureInfo);
   sk_sp<SkImage> image2 = SkImage::MakeFromTexture(
@@ -78,9 +83,11 @@ void TextureLayer::Paint(PaintContext& context) {
      info.refColorSpace()
   );
   FTL_DLOG(INFO) << "image from texture: " << image2;
+  context.canvas.save();
   context.canvas.scale(1.0, -1.0);
   context.canvas.translate(0.0, -paint_bounds().height());
   context.canvas.drawImage(image2, x, -y);
+  context.canvas.restore();
 }
 
 }  // namespace flow

@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.Canvas;
@@ -19,6 +20,7 @@ import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+//import android.media.MediaDataSource;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -39,6 +41,9 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.view.VsyncWaiter;
+import java.io.FileDescriptor;
+import java.io.File;
+import java.io.InputStream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -116,11 +121,10 @@ public class FlutterView extends SurfaceView
     }
 
     public void updateTexImage(long texName) {
-        Log.e(TAG, Thread.currentThread() + " updateTexImage " + texName);
         surfaceTexture.updateTexImage();
     }
 
-    public FlutterView(Context context, AttributeSet attrs) {
+    public FlutterView(final Context context, AttributeSet attrs) {
         super(context, attrs);
 
         mIsSoftwareRenderingEnabled = nativeGetIsSoftwareRenderingEnabled();
@@ -142,19 +146,16 @@ public class FlutterView extends SurfaceView
         }
         // TODO(abarth): Consider letting the developer override this color.
         final int backgroundColor = color;
-        Log.e(TAG, "FlutterView " + Thread.currentThread());
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 assertAttached();
                 nativeSurfaceCreated(mNativePlatformView, holder.getSurface(), backgroundColor);
                 final long texName = nativeAllocateSharedTexture();
-                Log.e(TAG, "Got texName " + texName);
                 surfaceTexture = new SurfaceTexture((int)texName);
                 surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
                     @Override
                     public void onFrameAvailable(SurfaceTexture texture) {
-                        Log.e(TAG, "frame available!!! " + texName);
                         nativeMarkSharedTextureDirty(texName);
                     }
                 });
@@ -163,10 +164,25 @@ public class FlutterView extends SurfaceView
                     mMediaPlayer.setDataSource("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_5mb.mp4");
                     mMediaPlayer.setSurface(new Surface(surfaceTexture));
                     mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    mMediaPlayer.prepare();
-                    mMediaPlayer.setLooping(true);
-                    mMediaPlayer.start();
+                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            Log.e(TAG, "onPrepared");
+                            mp.setLooping(true);
+                            mp.start();
+                        }
+                    });
+                    mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                        @Override
+                        public boolean onError(MediaPlayer mp, int what, int extra) {
+                            Log.e(TAG, "Mediaplayer error " + what);
+                            return true;
+                        }
+                    });
+                    Log.e(TAG, "preparing async");
+                    mMediaPlayer.prepareAsync();
                 } catch (Exception e) {
+                    Log.e(TAG, "ERROR");
                     e.printStackTrace();
                 }
             }
