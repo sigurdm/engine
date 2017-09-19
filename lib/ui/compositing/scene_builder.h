@@ -59,7 +59,7 @@ class SceneBuilder : public ftl::RefCountedThreadSafe<SceneBuilder>,
 
   void addPicture(double dx, double dy, Picture* picture, int hints);
 
-  void addTexture(double dx, double dy, double width, double height, int textureId);
+  void addExternalImage(double dx, double dy, double width, double height, int imageId);
 
   void addChildScene(double dx,
                      double dy,

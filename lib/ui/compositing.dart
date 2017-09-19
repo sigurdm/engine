@@ -197,12 +197,12 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
   }
   void _addPicture(double dx, double dy, Picture picture, int hints) native "SceneBuilder_addPicture";
 
-  void addTexture(int textureId, {Offset offset: Offset.zero, double width: 0.0,
+  void addExternalImage(int imageId, {Offset offset: Offset.zero, double width: 0.0,
     double height: 0.0}) {
-   _addTexture(offset.dx, offset.dy, width, height, textureId);
+   _addExternalImage(offset.dx, offset.dy, width, height, imageId);
   }
 
-  void _addTexture(double dx, double dy, double width, double height, int textureId) native "SceneBuilder_addTexture";
+  void _addExternalImage(double dx, double dy, double width, double height, int imageId) native "SceneBuilder_addExternalImage";
 
   /// (Fuchsia-only) Adds a scene rendered by another application to the scene
   /// for this application.

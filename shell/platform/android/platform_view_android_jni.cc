@@ -3,24 +3,14 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
+#include "flutter/shell/platform/android/gl_texture_external_image.h"
 #include "flutter/common/settings.h"
-#include "flutter/common/threads.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 #include "flutter/fml/platform/android/scoped_java_ref.h"
 #include "flutter/runtime/dart_service_isolate.h"
 #include "lib/ftl/arraysize.h"
 #include "lib/ftl/logging.h"
-#include "third_party/skia/include/gpu/GrTexture.h"
-#include "third_party/skia/include/core/SkSurface.h"
-#include "flutter/lib/ui/painting/resource_context.h"
-#include "flutter/flow/layers/texture_layer.h"
-#include "third_party/skia/include/gpu/GrTypes.h"
-#include "third_party/skia/include/gpu/GrBackendSurface.h"
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <GLES/gl.h>
-#include <GLES/glext.h>
 
 #define PLATFORM_VIEW (*reinterpret_cast<std::shared_ptr<PlatformViewAndroid>*>(platform_view))
 
@@ -66,6 +56,12 @@ void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj) {
   FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
 }
 
+static jmethodID g_update_tex_image_method;
+void FlutterViewUpdateTexImage(JNIEnv* env, jlong imageId) {
+  env->CallStaticVoidMethod(g_flutter_view_class->obj(), g_update_tex_image_method, imageId);
+  FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
+}
+
 // Called By Java
 
 static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
@@ -74,8 +70,7 @@ static jlong Attach(JNIEnv* env, jclass clazz, jobject flutterView) {
   // Create a weak reference to the flutterView Java object so that we can make
   // calls into it later.
   view->Attach();
-  flow::flutter_view = fml::jni::JavaObjectWeakGlobalRef(env, flutterView);
-  view->set_flutter_view(flow::flutter_view);
+  view->set_flutter_view(fml::jni::JavaObjectWeakGlobalRef(env, flutterView));
   return reinterpret_cast<jlong>(storage);
 }
 
@@ -206,24 +201,22 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
 }
 
 
-static jlong AllocateSharedTexture(JNIEnv* env, jobject jcaller) {
-  ftl::AutoResetWaitableEvent latch;
-  blink::Threads::IO()->PostTask([&latch]() {
-    GrGLuint texID;
-    glGenTextures(1, &texID);
-
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, texID);
-    flow::texName = texID;
-    latch.Signal();
-  });
-  latch.Wait();
-  return flow::texName;
+static jlong AllocateGlTextureImage(JNIEnv* env, jobject jcaller) {
+  GlTextureExternalImage* image = new GlTextureExternalImage();
+  jlong imageId = flow::ExternalImage::registerExternalImage(image);
+  return imageId;
 }
 
-static void MarkSharedTextureDirty(JNIEnv* env, jobject jcaller, jlong texName) {
-    blink::Threads::IO()->PostTask([]() {
-      flow::surfaceUpdated = true;
-    });
+static void MarkGlTextureImageDirty(JNIEnv* env, jobject jcaller, jlong imageId) {
+  blink::Threads::IO()->PostTask([imageId]() {
+    GlTextureExternalImage *image = static_cast<GlTextureExternalImage*>(flow::ExternalImage::getExternalImage(imageId));
+    image->set_new_frame_ready(true);
+  });
+}
+
+static jlong GlTextureImageGetTexName(JNIEnv* env, jobject jcaller, jlong imageId) {
+  GlTextureExternalImage* image = static_cast<GlTextureExternalImage*>(flow::ExternalImage::getExternalImage(imageId));
+  return image->texture_id();
 }
 
 static void InvokePlatformMessageResponseCallback(JNIEnv* env,
@@ -352,16 +345,20 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
       {
-         .name = "nativeAllocateSharedTexture",
+         .name = "nativeAllocateGlTextureImage",
          .signature = "()J",
-     .fnPtr = reinterpret_cast<void*>(&shell::AllocateSharedTexture),
+         .fnPtr = reinterpret_cast<void*>(&shell::AllocateGlTextureImage),
       },
       {
-         .name = "nativeMarkSharedTextureDirty",
-         .signature = "(J)V",
-     .fnPtr = reinterpret_cast<void*>(&shell::MarkSharedTextureDirty),
+         .name = "nativeGlTextureImageGetTexName",
+         .signature = "(J)J",
+         .fnPtr = reinterpret_cast<void*>(&shell::GlTextureImageGetTexName),
       },
-
+      {
+         .name = "nativeMarkGlTextureImageDirty",
+         .signature = "(J)V",
+         .fnPtr = reinterpret_cast<void*>(&shell::MarkGlTextureImageDirty),
+      },
   };
 
   if (env->RegisterNatives(g_flutter_view_class->obj(), methods,
@@ -399,10 +396,10 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     return false;
   }
 
-  flow::g_update_tex_image_method =
-      env->GetMethodID(g_flutter_view_class->obj(), "updateTexImage", "(J)V");
+  g_update_tex_image_method =
+      env->GetStaticMethodID(g_flutter_view_class->obj(), "updateTexImage", "(J)V");
 
-  if (flow::g_update_tex_image_method == nullptr) {
+  if (g_update_tex_image_method == nullptr) {
     return false;
   }
   return true;

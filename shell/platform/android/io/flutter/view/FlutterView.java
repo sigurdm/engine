@@ -20,7 +20,6 @@ import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-//import android.media.MediaDataSource;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -114,14 +113,10 @@ public class FlutterView extends SurfaceView
     private long mNativePlatformView;
     private boolean mIsSoftwareRenderingEnabled = false; // using the software renderer or not
     private MediaPlayer mMediaPlayer;
-    private SurfaceTexture surfaceTexture;
+    private static Map<Long, SurfaceTexture> imageIdToSurfaceTexture = new HashMap<Long, SurfaceTexture>();
 
     public FlutterView(Context context) {
         this(context, null);
-    }
-
-    public void updateTexImage(long texName) {
-        surfaceTexture.updateTexImage();
     }
 
     public FlutterView(final Context context, AttributeSet attrs) {
@@ -146,45 +141,12 @@ public class FlutterView extends SurfaceView
         }
         // TODO(abarth): Consider letting the developer override this color.
         final int backgroundColor = color;
+
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 assertAttached();
                 nativeSurfaceCreated(mNativePlatformView, holder.getSurface(), backgroundColor);
-                final long texName = nativeAllocateSharedTexture();
-                surfaceTexture = new SurfaceTexture((int)texName);
-                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture texture) {
-                        nativeMarkSharedTextureDirty(texName);
-                    }
-                });
-                try {
-                    mMediaPlayer = new MediaPlayer();
-                    mMediaPlayer.setDataSource("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_5mb.mp4");
-                    mMediaPlayer.setSurface(new Surface(surfaceTexture));
-                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mp) {
-                            Log.e(TAG, "onPrepared");
-                            mp.setLooping(true);
-                            mp.start();
-                        }
-                    });
-                    mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                        @Override
-                        public boolean onError(MediaPlayer mp, int what, int extra) {
-                            Log.e(TAG, "Mediaplayer error " + what);
-                            return true;
-                        }
-                    });
-                    Log.e(TAG, "preparing async");
-                    mMediaPlayer.prepareAsync();
-                } catch (Exception e) {
-                    Log.e(TAG, "ERROR");
-                    e.printStackTrace();
-                }
             }
 
             @Override
@@ -636,6 +598,22 @@ public class FlutterView extends SurfaceView
         return nativeGetBitmap(mNativePlatformView);
     }
 
+    public static long createSurfaceTexture() {
+        final long imageId = nativeAllocateGlTextureImage();
+        Log.e(TAG, "Registered native image " + imageId);
+        final long texName = nativeGlTextureImageGetTexName(imageId);
+        imageIdToSurfaceTexture.put(imageId, new SurfaceTexture((int)texName));
+        return imageId;
+    }
+
+    public static SurfaceTexture getSurfaceTexture(long imageId) {
+        return imageIdToSurfaceTexture.get(imageId);
+    }
+
+    public static void markSurfaceTextureDirty(long imageId) {
+        nativeMarkGlTextureImageDirty(imageId);
+    }
+
     private static native long nativeAttach(FlutterView view);
 
     private static native String nativeGetObservatoryUri();
@@ -699,9 +677,11 @@ public class FlutterView extends SurfaceView
 
     private static native boolean nativeGetIsSoftwareRenderingEnabled();
 
-    private static native long nativeAllocateSharedTexture();
+    private static native long nativeAllocateGlTextureImage();
 
-    private static native void nativeMarkSharedTextureDirty(long texName);
+    private static native void nativeMarkGlTextureImageDirty(long imageId);
+
+    private static native long nativeGlTextureImageGetTexName(long imageId);
 
     private void updateViewportMetrics() {
         if (!isAttached())
@@ -785,6 +765,11 @@ public class FlutterView extends SurfaceView
         for (FirstFrameListener listener : mFirstFrameListeners) {
             listener.onFirstFrame();
         }
+    }
+
+    // Called by native to get a new frame on an externalImage.
+    static private void updateTexImage(long imageId) {
+        imageIdToSurfaceTexture.get(imageId).updateTexImage();
     }
 
     // ACCESSIBILITY

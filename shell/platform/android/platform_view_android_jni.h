@@ -29,7 +29,7 @@ void FlutterViewUpdateSemantics(JNIEnv* env,
 
 void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj);
 
-void FlutterViewUpdateTexImage(jlong texName);
+void FlutterViewUpdateTexImage(JNIEnv* env, jlong imageId);
 
 }  // namespace shell
 

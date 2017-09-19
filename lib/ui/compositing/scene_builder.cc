@@ -14,7 +14,7 @@
 #include "flutter/flow/layers/performance_overlay_layer.h"
 #include "flutter/flow/layers/physical_model_layer.h"
 #include "flutter/flow/layers/picture_layer.h"
-#include "flutter/flow/layers/texture_layer.h"
+#include "flutter/flow/layers/external_image_layer.h"
 #include "flutter/flow/layers/shader_mask_layer.h"
 #include "flutter/flow/layers/transform_layer.h"
 #include "flutter/lib/ui/ui_dart_state.h"
@@ -52,7 +52,7 @@ IMPLEMENT_WRAPPERTYPEINFO(ui, SceneBuilder);
   V(SceneBuilder, pushPhysicalModel)                \
   V(SceneBuilder, pop)                              \
   V(SceneBuilder, addPicture)                       \
-  V(SceneBuilder, addTexture)                       \
+  V(SceneBuilder, addExternalImage)                 \
   V(SceneBuilder, addChildScene)                    \
   V(SceneBuilder, addPerformanceOverlay)            \
   V(SceneBuilder, setRasterizerTracingThreshold)    \
@@ -224,21 +224,20 @@ void SceneBuilder::addPicture(double dx,
   m_currentLayer->Add(std::move(layer));
 }
 
-void SceneBuilder::addTexture(double dx,
-                              double dy,
-                              double width,
-                              double height,
-                              int textureId) {
+void SceneBuilder::addExternalImage(double dx,
+                                    double dy,
+                                    double width,
+                                    double height,
+                                    int imageId) {
   if (!m_currentLayer)
     return;
 
-  std::unique_ptr<flow::TextureLayer> layer(new flow::TextureLayer());
+  std::unique_ptr<flow::ExternalImageLayer> layer(new flow::ExternalImageLayer());
   layer->set_offset(SkPoint::Make(dx, dy));
   layer->set_size(SkSize::Make(width, height));
-  layer->set_texture_id(textureId);
+  layer->set_image_id(imageId);
   m_currentLayer->Add(std::move(layer));
 }
-
 
 void SceneBuilder::addChildScene(double dx,
                                  double dy,
