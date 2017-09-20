@@ -24,37 +24,21 @@ void ExternalImageLayer::Preroll(PrerollContext* context, const SkMatrix& matrix
   set_needs_system_composite(true);
 }
 
-void printPixels(sk_sp<SkImage> image) {
-  uint pixel = 99;
-  SkImageInfo dstInfo = SkImageInfo::MakeN32(1, 1, SkAlphaType::kPremul_SkAlphaType);
-  image->readPixels(dstInfo, &pixel, 4, 0, 0);
-  FTL_DLOG(INFO) << "First pixel: " << pixel;
-}
-
 void ExternalImageLayer::Paint(PaintContext& context) {
-
   ExternalImage* image = ExternalImage::getExternalImage(image_id_);
-
   if (image == nullptr) {
     FTL_DLOG(INFO) << "No external image!";
     return;
   }
-
-  image->UpdateImage();
-
-  SkScalar x = paint_bounds().x();
-  SkScalar y = paint_bounds().y();
-
-  if (!image->first_frame_seen()) {
+  sk_sp<SkImage> sk_image = image->MakeSkImage(paint_bounds().width(), paint_bounds().height(), context.canvas.getGrContext());
+  if (!sk_image) {
     FTL_DLOG(INFO) << "No frame yet";
     return;
   }
-
-  sk_sp<SkImage> sk_image = image->MakeSkImage(paint_bounds().width(), paint_bounds().height(), context.canvas.getGrContext());
   context.canvas.save();
   context.canvas.scale(1.0, -1.0);
   context.canvas.translate(0.0, -paint_bounds().height());
-  context.canvas.drawImage(sk_image, x, -y);
+  context.canvas.drawImage(sk_image, paint_bounds().x(), -paint_bounds().y());
   context.canvas.restore();
 }
 

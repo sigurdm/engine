@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
-#include "flutter/shell/platform/android/gl_texture_external_image.h"
+#include "flutter/shell/platform/android/android_external_image_gl.h"
 #include "flutter/common/settings.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
@@ -200,22 +200,23 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return blink::Settings::Get().enable_software_rendering;
 }
 
-
-static jlong AllocateGlTextureImage(JNIEnv* env, jobject jcaller) {
-  GlTextureExternalImage* image = new GlTextureExternalImage();
+static jlong AllocateExternalImage(JNIEnv* env, jobject jcaller) {
+  AndroidExternalImageGL* image = new AndroidExternalImageGL();
   jlong imageId = flow::ExternalImage::registerExternalImage(image);
   return imageId;
 }
 
-static void MarkGlTextureImageDirty(JNIEnv* env, jobject jcaller, jlong imageId) {
-  blink::Threads::IO()->PostTask([imageId]() {
-    GlTextureExternalImage *image = static_cast<GlTextureExternalImage*>(flow::ExternalImage::getExternalImage(imageId));
-    image->set_new_frame_ready(true);
-  });
+static void MarkExternalImageFrameAvailable(JNIEnv* env,
+                                            jobject jcaller,
+                                            jlong platform_view,
+                                            jlong imageId) {
+  AndroidExternalImageGL *image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::getExternalImage(imageId));
+  image->mark_new_frame_available();
+  PLATFORM_VIEW->ScheduleFrame();
 }
 
-static jlong GlTextureImageGetTexName(JNIEnv* env, jobject jcaller, jlong imageId) {
-  GlTextureExternalImage* image = static_cast<GlTextureExternalImage*>(flow::ExternalImage::getExternalImage(imageId));
+static jlong GetExternalImageTextureID(JNIEnv* env, jobject jcaller, jlong imageId) {
+  AndroidExternalImageGL* image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::getExternalImage(imageId));
   return image->texture_id();
 }
 
@@ -345,19 +346,19 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
       {
-         .name = "nativeAllocateGlTextureImage",
+         .name = "nativeAllocateExternalImage",
          .signature = "()J",
-         .fnPtr = reinterpret_cast<void*>(&shell::AllocateGlTextureImage),
+         .fnPtr = reinterpret_cast<void*>(&shell::AllocateExternalImage),
       },
       {
-         .name = "nativeGlTextureImageGetTexName",
+         .name = "nativeGetExternalImageTextureID",
          .signature = "(J)J",
-         .fnPtr = reinterpret_cast<void*>(&shell::GlTextureImageGetTexName),
+         .fnPtr = reinterpret_cast<void*>(&shell::GetExternalImageTextureID),
       },
       {
-         .name = "nativeMarkGlTextureImageDirty",
-         .signature = "(J)V",
-         .fnPtr = reinterpret_cast<void*>(&shell::MarkGlTextureImageDirty),
+         .name = "nativeMarkExternalImageFrameAvailable",
+         .signature = "(JJ)V",
+         .fnPtr = reinterpret_cast<void*>(&shell::MarkExternalImageFrameAvailable),
       },
   };
 

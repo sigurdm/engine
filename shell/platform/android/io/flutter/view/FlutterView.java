@@ -599,10 +599,10 @@ public class FlutterView extends SurfaceView
     }
 
     public static long createSurfaceTexture() {
-        final long imageId = nativeAllocateGlTextureImage();
+        final long imageId = nativeAllocateExternalImage();
         Log.e(TAG, "Registered native image " + imageId);
-        final long texName = nativeGlTextureImageGetTexName(imageId);
-        imageIdToSurfaceTexture.put(imageId, new SurfaceTexture((int)texName));
+        final long textureId = nativeGetExternalImageTextureID(imageId);
+        imageIdToSurfaceTexture.put(imageId, new SurfaceTexture((int)textureId));
         return imageId;
     }
 
@@ -610,8 +610,8 @@ public class FlutterView extends SurfaceView
         return imageIdToSurfaceTexture.get(imageId);
     }
 
-    public static void markSurfaceTextureDirty(long imageId) {
-        nativeMarkGlTextureImageDirty(imageId);
+    public void markSurfaceTextureDirty(long imageId) {
+        nativeMarkExternalImageFrameAvailable(mNativePlatformView, imageId);
     }
 
     private static native long nativeAttach(FlutterView view);
@@ -677,11 +677,11 @@ public class FlutterView extends SurfaceView
 
     private static native boolean nativeGetIsSoftwareRenderingEnabled();
 
-    private static native long nativeAllocateGlTextureImage();
+    private static native long nativeAllocateExternalImage();
 
-    private static native void nativeMarkGlTextureImageDirty(long imageId);
+    private static native void nativeMarkExternalImageFrameAvailable(long nativePlatformViewAndroid, long imageId);
 
-    private static native long nativeGlTextureImageGetTexName(long imageId);
+    private static native long nativeGetExternalImageTextureID(long imageId);
 
     private void updateViewportMetrics() {
         if (!isAttached())

@@ -11,7 +11,6 @@ static std::map<int, ExternalImage*> mapping = {};
 int ExternalImage::registerExternalImage(ExternalImage* image) {
     int id = mapping.size() + 1;
     mapping[id] = image;
-    FTL_DLOG(INFO) << "Registering image " << image << "!";
     image->image_id_ = id;
     return id;
 }
@@ -23,7 +22,6 @@ void ExternalImage::disposeExternalImage(int id) {
 }
 
 ExternalImage* ExternalImage::getExternalImage(int id) {
-  FTL_DLOG(INFO) << "Getting image " << id;
   return mapping[id];
 }
 

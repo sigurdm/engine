@@ -93,6 +93,8 @@ class PlatformViewAndroid : public PlatformView {
 
   void HandlePlatformMessageEmptyResponse(int response_id);
 
+  void ScheduleFrame();
+
   void RunFromSource(const std::string& assets_directory,
                      const std::string& main,
                      const std::string& packages) override;

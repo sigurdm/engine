@@ -217,6 +217,13 @@ void PlatformViewAndroid::RunBundleAndSnapshot(std::string bundle_path,
   });
 }
 
+void PlatformViewAndroid::ScheduleFrame() {
+  blink::Threads::UI()->PostTask([engine = engine_->GetWeakPtr()] {
+    if (engine)
+      engine->ScheduleFrame();
+  });
+}
+
 void PlatformViewAndroid::RunBundleAndSource(std::string bundle_path,
                                              std::string main,
                                              std::string packages) {
