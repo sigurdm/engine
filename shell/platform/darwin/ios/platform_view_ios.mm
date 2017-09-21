@@ -25,6 +25,10 @@ PlatformViewIOS::PlatformViewIOS(CALayer* layer)
 
 PlatformViewIOS::~PlatformViewIOS() = default;
 
+CVPixelBufferRef PlatformViewIOS::GetPixelBuffer(int image_id) {
+  return nullptr;
+}
+
 void PlatformViewIOS::Attach() {
   Attach(NULL);
 }

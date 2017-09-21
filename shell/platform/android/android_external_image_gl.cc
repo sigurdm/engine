@@ -1,3 +1,7 @@
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include <jni.h>
 #include "flutter/shell/platform/android/android_external_image_gl.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
@@ -52,16 +56,14 @@ sk_sp<SkImage> AndroidExternalImageGL::MakeSkImage(int width, int height, GrCont
   if (!first_frame_seen_) {
     return nullptr;
   }
-  SkImageInfo info = SkImageInfo::MakeN32(128, 64, SkAlphaType::kPremul_SkAlphaType);
   GrGLTextureInfo textureInfo = {0x8D65, texture_id_};
-
   GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig, textureInfo);
   sk_sp<SkImage> sk_image = SkImage::MakeFromTexture(
      grContext,
      backendTexture,
      kBottomLeft_GrSurfaceOrigin,
      SkAlphaType::kPremul_SkAlphaType,
-     info.refColorSpace()
+     nullptr
   );
   return sk_image;
 }
