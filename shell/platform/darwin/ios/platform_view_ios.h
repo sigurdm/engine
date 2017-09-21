@@ -55,6 +55,8 @@ class PlatformViewIOS : public PlatformView {
                      const std::string& main,
                      const std::string& packages) override;
 
+  static CVPixelBufferRef GetPixelBuffer(int image_id);
+
  private:
   std::unique_ptr<IOSSurface> ios_surface_;
   PlatformMessageRouter platform_message_router_;
