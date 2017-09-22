@@ -32,7 +32,6 @@ void ExternalImageLayer::Paint(PaintContext& context) {
   }
   sk_sp<SkImage> sk_image = image->MakeSkImage(paint_bounds().width(), paint_bounds().height(), context.canvas.getGrContext());
   if (!sk_image) {
-    FTL_DLOG(INFO) << "No frame yet";
     return;
   }
   context.canvas.save();
