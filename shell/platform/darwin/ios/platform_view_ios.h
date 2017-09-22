@@ -55,6 +55,7 @@ class PlatformViewIOS : public PlatformView {
                      const std::string& main,
                      const std::string& packages) override;
 
+  void SetupPlayer();
   static CVPixelBufferRef GetPixelBuffer(int image_id);
 
  private:
