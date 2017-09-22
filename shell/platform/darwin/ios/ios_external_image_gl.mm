@@ -32,6 +32,7 @@ sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext 
   CVPixelBufferRef buffer;
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([this, &latch, &buffer]() {
+    FTL_LOG(INFO) << "Here X";
     buffer = PlatformViewIOS::GetPixelBuffer(image_id());
     latch.Signal();
   });

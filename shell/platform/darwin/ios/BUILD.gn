@@ -89,6 +89,7 @@ shared_library("flutter_framework_dylib") {
   defines = [ "FLUTTER_FRAMEWORK" ]
 
   libs = [
+    "CoreMedia.framework",
     "CoreVideo.framework",
     "UIKit.framework",
     "OpenGLES.framework",

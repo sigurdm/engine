@@ -3,13 +3,16 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
+#include "flutter/shell/platform/darwin/ios/ios_external_image_gl.h"
 
+#import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
 #include <utility>
 
 #include "flutter/common/threads.h"
 #include "flutter/fml/trace_event.h"
+#include "flutter/flow/external_image.h"
 #include "flutter/shell/gpu/gpu_rasterizer.h"
 #include "flutter/shell/platform/darwin/common/process_info_mac.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
@@ -17,15 +20,60 @@
 
 namespace shell {
 
+AVPlayer* player;
+AVPlayerItemVideoOutput* videoOutput;
+
 PlatformViewIOS::PlatformViewIOS(CALayer* layer)
     : PlatformView(std::make_unique<GPURasterizer>(std::make_unique<ProcessInfoMac>())),
       ios_surface_(IOSSurface::Create(surface_config_, layer)),
       weak_factory_(this) {
+    IOSExternalImageGL* image = new IOSExternalImageGL();
+    flow::ExternalImage::registerExternalImage(image);
+
+    player = [[AVPlayer alloc] init];
+    FTL_LOG(INFO) << "Player: " << player;
+    NSDictionary *pixBuffAttributes = @{(id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)};
+    videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pixBuffAttributes];
+    AVPlayerItem *item = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:@"http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_1mb.mp4"]];
+    AVAsset *asset = [item asset];
+    FTL_LOG(INFO) << "Asset: " << asset;
+    [asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:^{
+        FTL_LOG(INFO) << "Here A";
+        if ([asset statusOfValueForKey:@"tracks" error:nil] == AVKeyValueStatusLoaded) {
+            NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+            if ([tracks count] > 0) {
+              FTL_LOG(INFO) << "Here B";
+                AVAssetTrack *videoTrack = [tracks objectAtIndex:0];
+                [videoTrack loadValuesAsynchronouslyForKeys:@[@"preferredTransform"] completionHandler:^{
+                    FTL_LOG(INFO) << "Here C";
+                    if ([videoTrack statusOfValueForKey:@"preferredTransform" error:nil] == AVKeyValueStatusLoaded) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            FTL_LOG(INFO) << "Here D";
+                            [item addOutput:videoOutput];
+                            [player replaceCurrentItemWithPlayerItem:item];
+                            [player play];
+                            FTL_LOG(INFO) << "Here E";
+                        });
+                    }
+                }];
+            }
+        }
+    }];
 }
 
 PlatformViewIOS::~PlatformViewIOS() = default;
 
 CVPixelBufferRef PlatformViewIOS::GetPixelBuffer(int image_id) {
+  FTL_LOG(INFO) << "Here F1";
+  CMTime outputItemTime = CMTimeMakeWithSeconds(1.0f, 1);
+  FTL_LOG(INFO) << "Here F2";
+  if ([videoOutput hasNewPixelBufferForItemTime:outputItemTime]) {
+    FTL_LOG(INFO) << "Here F3";
+    CVPixelBufferRef ref = [videoOutput copyPixelBufferForItemTime:outputItemTime itemTimeForDisplay:NULL];
+    FTL_LOG(INFO) << "Here F4";
+    return ref;
+  }
+  FTL_LOG(INFO) << "Here F5";
   return nullptr;
 }
 
