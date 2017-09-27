@@ -221,10 +221,10 @@
   return nil;
 }
 
-- (NSObject<FlutterExternalImageRegistry>*)externalImageRegistry {
+- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry {
   UIViewController* rootViewController = _window.rootViewController;
-  if ([rootViewController conformsToProtocol:@protocol(FlutterExternalImageRegistry)]) {
-    return (NSObject<FlutterExternalImageRegistry>*)rootViewController;
+  if ([rootViewController conformsToProtocol:@protocol(FlutterPlatformSurfaceRegistry)]) {
+    return (NSObject<FlutterPlatformSurfaceRegistry>*)rootViewController;
   }
   return nil;
 }
@@ -268,8 +268,8 @@
   return [_appDelegate binaryMessenger];
 }
 
-- (NSObject<FlutterExternalImageRegistry>*)externalImageRegistry {
-  return [_appDelegate externalImageRegistry];
+- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry {
+  return [_appDelegate platformSurfaceRegistry];
 }
 
 - (void)publish:(NSObject*)value {

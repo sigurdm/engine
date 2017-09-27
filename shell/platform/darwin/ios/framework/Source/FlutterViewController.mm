@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "flutter/common/threads.h"
-#include "flutter/flow/external_image.h"
+#include "flutter/flow/platform_surface.h"
 #include "flutter/fml/platform/darwin/platform_version.h"
 #include "flutter/fml/platform/darwin/scoped_block.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
@@ -21,7 +21,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_main_ios.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_touch_mapper.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
-#include "flutter/shell/platform/darwin/ios/ios_external_image_gl.h"
+#include "flutter/shell/platform/darwin/ios/ios_platform_surface_gl.h"
 #include "lib/ftl/functional/make_copyable.h"
 #include "lib/ftl/time/time_delta.h"
 
@@ -770,14 +770,14 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
   _platformView->platform_message_router().SetMessageHandler(channel.UTF8String, handler);
 }
 
-#pragma mark - FlutterExternalImageRegistry
+#pragma mark - FlutterPlatformSurfaceRegistry
 
-- (NSUInteger)registerExternalImage:(NSObject<FlutterExternalImage>*)image {
-  return flow::ExternalImage::RegisterExternalImage(new shell::IOSExternalImageGL(image));
+- (NSUInteger)registerPlatformSurface:(NSObject<FlutterPlatformSurface>*)surface {
+  return flow::PlatformSurface::RegisterPlatformSurface(new shell::IOSPlatformSurfaceGL(surface));
 }
 
-- (void)unregisterExternalImage:(NSUInteger)imageId {
-  flow::ExternalImage::DisposeExternalImage(imageId);
+- (void)unregisterPlatformSurface:(NSUInteger)surfaceId {
+  flow::PlatformSurface::DisposePlatformSurface(surfaceId);
 }
 
 @end

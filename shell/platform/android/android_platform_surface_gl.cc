@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include <jni.h>
-#include "flutter/shell/platform/android/android_external_image_gl.h"
+#include "flutter/shell/platform/android/android_platform_surface_gl.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
 #include "flutter/common/threads.h"
 #include "third_party/skia/include/gpu/GrTexture.h"
@@ -18,7 +18,7 @@
 
 namespace shell {
 
-AndroidExternalImageGL::~AndroidExternalImageGL() {
+AndroidPlatformSurfaceGL::~AndroidPlatformSurfaceGL() {
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([this, &latch]() {
     glDeleteTextures(1, &texture_id_);
@@ -27,7 +27,7 @@ AndroidExternalImageGL::~AndroidExternalImageGL() {
   latch.Wait();
 }
 
-AndroidExternalImageGL::AndroidExternalImageGL() {
+AndroidPlatformSurfaceGL::AndroidPlatformSurfaceGL() {
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([this, &latch]() {
     GrGLuint texID;
@@ -40,20 +40,20 @@ AndroidExternalImageGL::AndroidExternalImageGL() {
   latch.Wait();
 }
 
-void AndroidExternalImageGL::mark_new_frame_available() {
+void AndroidPlatformSurfaceGL::MarkNewFrameAvailable() {
   ASSERT_IS_PLATFORM_THREAD;
   blink::Threads::IO()->PostTask([this]() {
     new_frame_ready_ = true;
   });
 }
 
-sk_sp<SkImage> AndroidExternalImageGL::MakeSkImage(int width, int height, GrContext *grContext) {
+sk_sp<SkImage> AndroidPlatformSurfaceGL::MakeSkImage(int width, int height, GrContext *grContext) {
   ASSERT_IS_GPU_THREAD;
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([this, &latch]() {
     if (new_frame_ready_) {
       JNIEnv* env = fml::jni::AttachCurrentThread();
-      FlutterViewUpdateTexImage(env, image_id());
+      FlutterViewUpdateTexImage(env, Id());
       first_frame_seen_ = true;
       new_frame_ready_ = false;
     }

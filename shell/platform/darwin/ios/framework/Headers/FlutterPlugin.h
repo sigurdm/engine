@@ -10,7 +10,7 @@
 #include "FlutterBinaryMessenger.h"
 #include "FlutterChannels.h"
 #include "FlutterCodecs.h"
-#include "FlutterExternalImage.h"
+#include "FlutterPlatformSurface.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol FlutterPluginRegistrar;
@@ -144,12 +144,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSObject<FlutterBinaryMessenger>*)messenger;
 
 /**
- Returns a `FlutterExternalImageRegistry` for registering image sources
+ Returns a `FlutterPlatformSurfaceRegistry` for registering surfaces
  provided by the plugin.
 
- - Returns: The image registry.
+ - Returns: The surface registry.
  */
-- (NSObject<FlutterExternalImageRegistry>*)externalImageRegistry;
+- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry;
 
 /**
  Publishes a value for external use of the plugin.

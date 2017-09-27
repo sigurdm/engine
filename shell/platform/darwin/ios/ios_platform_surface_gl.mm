@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/shell/platform/darwin/ios/ios_external_image_gl.h"
+#include "flutter/shell/platform/darwin/ios/ios_platform_surface_gl.h"
 #include "flutter/common/threads.h"
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/core/SkSurface.h"
@@ -12,12 +12,15 @@
 
 namespace shell {
 
-IOSExternalImageGL::~IOSExternalImageGL(){}
-IOSExternalImageGL::IOSExternalImageGL(NSObject<FlutterExternalImage>* image): image_(image) {
-  FTL_DCHECK(image);
+IOSPlatformSurfaceGL::~IOSPlatformSurfaceGL() {
+  // TODO(sigurdm, mravn): dispose cache.
 }
 
-sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext *grContext) {
+IOSPlatformSurfaceGL::IOSPlatformSurfaceGL(NSObject<FlutterPlatformSurface>* surface): surface_(surface) {
+  FTL_DCHECK(surface);
+}
+
+sk_sp<SkImage> IOSPlatformSurfaceGL::MakeSkImage(int width, int height, GrContext *grContext) {
   ASSERT_IS_GPU_THREAD;
   CVPixelBufferRef buffer;
   ftl::AutoResetWaitableEvent latch;
@@ -28,7 +31,7 @@ sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext 
         FTL_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
       }
     }
-    buffer = [image_ getImage];
+    buffer = [surface_ getPixelBuffer];
     latch.Signal();
   });
   latch.Wait();

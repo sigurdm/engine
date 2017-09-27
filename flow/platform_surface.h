@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef FLUTTER_FLOW_EXTERNAL_IMAGE_H_
-#define FLUTTER_FLOW_EXTERNAL_IMAGE_H_
+#ifndef FLUTTER_FLOW_PLATFORM_SURFACE_H_
+#define FLUTTER_FLOW_PLATFORM_SURFACE_H_
 
 #include <map>
 #include "third_party/skia/include/gpu/GrTypes.h"
@@ -17,23 +17,23 @@
 
 namespace flow {
 
-class ExternalImage {
+class PlatformSurface {
   public:
-    static int RegisterExternalImage(ExternalImage* image);
-    static void DisposeExternalImage(int id);
-    static ExternalImage* GetExternalImage(int id);
+    static int RegisterPlatformSurface(PlatformSurface* surface);
+    static void DisposePlatformSurface(int id);
+    static PlatformSurface* GetPlatformSurface(int id);
 
-    virtual ~ExternalImage() {};
+    virtual ~PlatformSurface() {};
 
     // Called from GPU thread.
     virtual sk_sp<SkImage> MakeSkImage(int width, int height, GrContext* grContext) = 0;
 
-    int image_id() { return image_id_; }
+    int Id() { return id_; }
 
   private:
-   int image_id_;
+   int id_;
 };
 
 } // namespace flow
 
-#endif // FLUTTER_FLOW_EXTERNAL_IMAGE_H_
+#endif // FLUTTER_FLOW_PLATFORM_SURFACE_H_

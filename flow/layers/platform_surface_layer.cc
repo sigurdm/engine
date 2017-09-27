@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/flow/layers/external_image_layer.h"
-#include "flutter/flow/external_image.h"
+#include "flutter/flow/layers/platform_surface_layer.h"
+#include "flutter/flow/platform_surface.h"
 #include "third_party/skia/include/gpu/GrTypes.h"
 #include "third_party/skia/include/gpu/GrBackendSurface.h"
 #include "third_party/skia/include/gpu/GrContext.h"
@@ -15,22 +15,22 @@
 
 namespace flow {
 
-ExternalImageLayer::ExternalImageLayer() = default;
+PlatformSurfaceLayer::PlatformSurfaceLayer() = default;
 
-ExternalImageLayer::~ExternalImageLayer() = default;
+PlatformSurfaceLayer::~PlatformSurfaceLayer() = default;
 
-void ExternalImageLayer::Preroll(PrerollContext* context, const SkMatrix& matrix) {
+void PlatformSurfaceLayer::Preroll(PrerollContext* context, const SkMatrix& matrix) {
   set_paint_bounds(SkRect::MakeXYWH(offset_.x(), offset_.y(), size_.width(), size_.height()));
   set_needs_system_composite(true);
 }
 
-void ExternalImageLayer::Paint(PaintContext& context) {
-  ExternalImage* image = ExternalImage::GetExternalImage(image_id_);
-  if (image == nullptr) {
-    FTL_DLOG(INFO) << "No external image!";
+void PlatformSurfaceLayer::Paint(PaintContext& context) {
+  PlatformSurface* surface = PlatformSurface::GetPlatformSurface(surface_id_);
+  if (surface == nullptr) {
+    FTL_DLOG(WARNING) << "No platform surface with id: " << surface_id_;
     return;
   }
-  sk_sp<SkImage> sk_image = image->MakeSkImage(paint_bounds().width(), paint_bounds().height(), context.canvas.getGrContext());
+  sk_sp<SkImage> sk_image = surface->MakeSkImage(paint_bounds().width(), paint_bounds().height(), context.canvas.getGrContext());
   if (!sk_image) {
     return;
   }

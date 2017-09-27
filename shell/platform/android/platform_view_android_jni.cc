@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
-#include "flutter/shell/platform/android/android_external_image_gl.h"
+#include "flutter/shell/platform/android/android_platform_surface_gl.h"
 #include "flutter/common/settings.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
@@ -57,8 +57,8 @@ void FlutterViewOnFirstFrame(JNIEnv* env, jobject obj) {
 }
 
 static jmethodID g_update_tex_image_method;
-void FlutterViewUpdateTexImage(JNIEnv* env, jlong imageId) {
-  env->CallStaticVoidMethod(g_flutter_view_class->obj(), g_update_tex_image_method, imageId);
+void FlutterViewUpdateTexImage(JNIEnv* env, jlong surfaceId) {
+  env->CallStaticVoidMethod(g_flutter_view_class->obj(), g_update_tex_image_method, surfaceId);
   FTL_CHECK(env->ExceptionCheck() == JNI_FALSE);
 }
 
@@ -200,28 +200,28 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return blink::Settings::Get().enable_software_rendering;
 }
 
-static jlong AllocateExternalImage(JNIEnv* env, jobject jcaller) {
-  AndroidExternalImageGL* image = new AndroidExternalImageGL();
-  jlong imageId = flow::ExternalImage::RegisterExternalImage(image);
-  return imageId;
+static jlong AllocatePlatformSurface(JNIEnv* env, jobject jcaller) {
+  AndroidPlatformSurfaceGL* surface = new AndroidPlatformSurfaceGL();
+  jlong surfaceId = flow::PlatformSurface::RegisterPlatformSurface(surface);
+  return surfaceId;
 }
 
-static void MarkExternalImageFrameAvailable(JNIEnv* env,
+static void MarkPlatformSurfaceFrameAvailable(JNIEnv* env,
                                             jobject jcaller,
                                             jlong platform_view,
-                                            jlong imageId) {
-  AndroidExternalImageGL *image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::GetExternalImage(imageId));
-  image->mark_new_frame_available();
+                                            jlong surfaceId) {
+  AndroidPlatformSurfaceGL *surface = static_cast<AndroidPlatformSurfaceGL*>(flow::PlatformSurface::GetPlatformSurface(surfaceId));
+  surface->MarkNewFrameAvailable();
   PLATFORM_VIEW->ScheduleFrame();
 }
 
-static void ReleaseExternalImage(JNIEnv* env, jobject jcaller, jlong imageId) {
-  flow::ExternalImage::disposeExternalImage(imageId);
+static void ReleasePlatformSurface(JNIEnv* env, jobject jcaller, jlong surfaceId) {
+  flow::PlatformSurface::DisposePlatformSurface(surfaceId);
 }
 
-static jlong GetExternalImageTextureID(JNIEnv* env, jobject jcaller, jlong imageId) {
-  AndroidExternalImageGL* image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::GetExternalImage(imageId));
-  return image->texture_id();
+static jlong GetPlatformSurfaceTextureID(JNIEnv* env, jobject jcaller, jlong surfaceId) {
+  AndroidPlatformSurfaceGL* surface = static_cast<AndroidPlatformSurfaceGL*>(flow::PlatformSurface::GetPlatformSurface(surfaceId));
+  return surface->texture_id();
 }
 
 static void InvokePlatformMessageResponseCallback(JNIEnv* env,
@@ -350,24 +350,24 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
       {
-         .name = "nativeAllocateExternalImage",
+         .name = "nativeAllocatePlatformSurface",
          .signature = "()J",
-         .fnPtr = reinterpret_cast<void*>(&shell::AllocateExternalImage),
+         .fnPtr = reinterpret_cast<void*>(&shell::AllocatePlatformSurface),
       },
       {
-         .name = "nativeGetExternalImageTextureID",
+         .name = "nativeGetPlatformSurfaceTextureID",
          .signature = "(J)J",
-         .fnPtr = reinterpret_cast<void*>(&shell::GetExternalImageTextureID),
+         .fnPtr = reinterpret_cast<void*>(&shell::GetPlatformSurfaceTextureID),
       },
       {
-         .name = "nativeMarkExternalImageFrameAvailable",
+         .name = "nativeMarkPlatformSurfaceFrameAvailable",
          .signature = "(JJ)V",
-         .fnPtr = reinterpret_cast<void*>(&shell::MarkExternalImageFrameAvailable),
+         .fnPtr = reinterpret_cast<void*>(&shell::MarkPlatformSurfaceFrameAvailable),
       },
       {
-         .name = "nativeReleaseExternalImage",
+         .name = "nativeReleasePlatformSurface",
          .signature = "(J)V",
-         .fnPtr = reinterpret_cast<void*>(&shell::ReleaseExternalImage),
+         .fnPtr = reinterpret_cast<void*>(&shell::ReleasePlatformSurface),
       },
   };
 
