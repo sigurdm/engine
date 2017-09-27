@@ -18,7 +18,14 @@
 
 namespace shell {
 
-AndroidExternalImageGL::~AndroidExternalImageGL() {}
+AndroidExternalImageGL::~AndroidExternalImageGL() {
+  ftl::AutoResetWaitableEvent latch;
+  blink::Threads::IO()->PostTask([this, &latch]() {
+    glDeleteTextures(1, &texture_id_);
+    latch.Signal();
+  });
+  latch.Wait();
+}
 
 AndroidExternalImageGL::AndroidExternalImageGL() {
   ftl::AutoResetWaitableEvent latch;
@@ -56,7 +63,7 @@ sk_sp<SkImage> AndroidExternalImageGL::MakeSkImage(int width, int height, GrCont
   if (!first_frame_seen_) {
     return nullptr;
   }
-  GrGLTextureInfo textureInfo = {0x8D65, texture_id_};
+  GrGLTextureInfo textureInfo = {GL_TEXTURE_EXTERNAL_OES, texture_id_};
   GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig, textureInfo);
   sk_sp<SkImage> sk_image = SkImage::MakeFromTexture(
      grContext,

@@ -606,6 +606,12 @@ public class FlutterView extends SurfaceView
         return imageId;
     }
 
+    public static void releaseSurfaceTexture(long imageId) {
+        SurfaceTexture surfaceTexture = imageIdToSurfaceTexture.remove(imageId);
+        surfaceTexture.release;
+        nativeReleaseExternalImage(imageId);
+    }
+
     public static SurfaceTexture getSurfaceTexture(long imageId) {
         return imageIdToSurfaceTexture.get(imageId);
     }
@@ -680,6 +686,8 @@ public class FlutterView extends SurfaceView
     private static native long nativeAllocateExternalImage();
 
     private static native void nativeMarkExternalImageFrameAvailable(long nativePlatformViewAndroid, long imageId);
+
+    private static native void nativeReleaseExternalImage(long imageId);
 
     private static native long nativeGetExternalImageTextureID(long imageId);
 

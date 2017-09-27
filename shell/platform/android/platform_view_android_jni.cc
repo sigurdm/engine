@@ -215,6 +215,13 @@ static void MarkExternalImageFrameAvailable(JNIEnv* env,
   PLATFORM_VIEW->ScheduleFrame();
 }
 
+static void ReleaseExternalImage(JNIEnv* env, jobject jcaller, jlong imageId) {
+  AndroidExternalImageGL* image = new AndroidExternalImageGL();
+
+  flow::ExternalImage::disposeExternalImage(imageId);
+  return imageId;
+}
+
 static jlong GetExternalImageTextureID(JNIEnv* env, jobject jcaller, jlong imageId) {
   AndroidExternalImageGL* image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::getExternalImage(imageId));
   return image->texture_id();
@@ -359,6 +366,11 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
          .name = "nativeMarkExternalImageFrameAvailable",
          .signature = "(JJ)V",
          .fnPtr = reinterpret_cast<void*>(&shell::MarkExternalImageFrameAvailable),
+      },
+      {
+         .name = "nativeReleaseExternalImage",
+         .signature = "(J)V",
+         .fnPtr = reinterpret_cast<void*>(&shell::ReleaseExternalImage),
       },
   };
 
