@@ -143,7 +143,6 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
                            }];
         }
       });
-  FTL_LOG(INFO) << "Setting up resource context on IO thread";
   _platformView->SetupResourceContextOnIOThread();
   _platformView->SetupPlayer();
   _localizationChannel.reset([[FlutterMethodChannel alloc]

@@ -35,31 +35,32 @@ void PlatformViewIOS::SetupPlayer() {
   IOSExternalImageGL* image = new IOSExternalImageGL(this);
   flow::ExternalImage::registerExternalImage(image);
   player = [[AVPlayer alloc] init];
-  FTL_LOG(INFO) << "Player: " << player;
+  player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
+  [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
+                                                    object:[player currentItem]
+                                                     queue:[NSOperationQueue mainQueue]
+                                                usingBlock:^(NSNotification *note) {
+    AVPlayerItem *p = [note object];
+    [p seekToTime:kCMTimeZero];
+  }];
   NSDictionary *pixBuffAttributes = @{
-    (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA/*420YpCbCr8BiPlanarVideoRange*/),
+    (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA),
     (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
   };
   videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pixBuffAttributes];
-  AVPlayerItem *item = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:@"http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_20mb.mp4"]];
+  AVPlayerItem *item = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:@"http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_10mb.mp4"]];
   AVAsset *asset = [item asset];
-  FTL_LOG(INFO) << "Asset: " << asset;
   [asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:^{
-      FTL_LOG(INFO) << "Here A";
       if ([asset statusOfValueForKey:@"tracks" error:nil] == AVKeyValueStatusLoaded) {
           NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
           if ([tracks count] > 0) {
-            FTL_LOG(INFO) << "Here B";
               AVAssetTrack *videoTrack = [tracks objectAtIndex:0];
               [videoTrack loadValuesAsynchronouslyForKeys:@[@"preferredTransform"] completionHandler:^{
-                  FTL_LOG(INFO) << "Here C";
                   if ([videoTrack statusOfValueForKey:@"preferredTransform" error:nil] == AVKeyValueStatusLoaded) {
                       dispatch_async(dispatch_get_main_queue(), ^{
-                          FTL_LOG(INFO) << "Here D";
                           [item addOutput:videoOutput];
                           [player replaceCurrentItemWithPlayerItem:item];
                           [player play];
-                          FTL_LOG(INFO) << "Here E";
                       });
                   }
               }];
@@ -74,7 +75,6 @@ CVPixelBufferRef PlatformViewIOS::GetPixelBuffer(int image_id) {
     CVPixelBufferRef ref = [videoOutput copyPixelBufferForItemTime:outputItemTime itemTimeForDisplay:NULL];
     return ref;
   }
-  FTL_LOG(INFO) << "No pixel buffer for current time";
   return nullptr;
 }
 
