@@ -216,10 +216,7 @@ static void MarkExternalImageFrameAvailable(JNIEnv* env,
 }
 
 static void ReleaseExternalImage(JNIEnv* env, jobject jcaller, jlong imageId) {
-  AndroidExternalImageGL* image = new AndroidExternalImageGL();
-
   flow::ExternalImage::disposeExternalImage(imageId);
-  return imageId;
 }
 
 static jlong GetExternalImageTextureID(JNIEnv* env, jobject jcaller, jlong imageId) {

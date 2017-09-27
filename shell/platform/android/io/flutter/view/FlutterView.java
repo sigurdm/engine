@@ -608,7 +608,7 @@ public class FlutterView extends SurfaceView
 
     public static void releaseSurfaceTexture(long imageId) {
         SurfaceTexture surfaceTexture = imageIdToSurfaceTexture.remove(imageId);
-        surfaceTexture.release;
+        surfaceTexture.release();
         nativeReleaseExternalImage(imageId);
     }
 
