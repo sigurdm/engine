@@ -202,7 +202,7 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
 
 static jlong AllocateExternalImage(JNIEnv* env, jobject jcaller) {
   AndroidExternalImageGL* image = new AndroidExternalImageGL();
-  jlong imageId = flow::ExternalImage::registerExternalImage(image);
+  jlong imageId = flow::ExternalImage::RegisterExternalImage(image);
   return imageId;
 }
 
@@ -210,7 +210,7 @@ static void MarkExternalImageFrameAvailable(JNIEnv* env,
                                             jobject jcaller,
                                             jlong platform_view,
                                             jlong imageId) {
-  AndroidExternalImageGL *image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::getExternalImage(imageId));
+  AndroidExternalImageGL *image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::GetExternalImage(imageId));
   image->mark_new_frame_available();
   PLATFORM_VIEW->ScheduleFrame();
 }
@@ -220,7 +220,7 @@ static void ReleaseExternalImage(JNIEnv* env, jobject jcaller, jlong imageId) {
 }
 
 static jlong GetExternalImageTextureID(JNIEnv* env, jobject jcaller, jlong imageId) {
-  AndroidExternalImageGL* image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::getExternalImage(imageId));
+  AndroidExternalImageGL* image = static_cast<AndroidExternalImageGL*>(flow::ExternalImage::GetExternalImage(imageId));
   return image->texture_id();
 }
 

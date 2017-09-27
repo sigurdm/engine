@@ -19,9 +19,9 @@ namespace flow {
 
 class ExternalImage {
   public:
-    static int registerExternalImage(ExternalImage* image);
-    static void disposeExternalImage(int id);
-    static ExternalImage* getExternalImage(int id);
+    static int RegisterExternalImage(ExternalImage* image);
+    static void DisposeExternalImage(int id);
+    static ExternalImage* GetExternalImage(int id);
 
     virtual ~ExternalImage() {};
 

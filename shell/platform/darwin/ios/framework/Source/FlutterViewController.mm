@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "flutter/common/threads.h"
+#include "flutter/flow/external_image.h"
 #include "flutter/fml/platform/darwin/platform_version.h"
 #include "flutter/fml/platform/darwin/scoped_block.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
@@ -20,6 +21,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_main_ios.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_touch_mapper.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
+#include "flutter/shell/platform/darwin/ios/ios_external_image_gl.h"
 #include "lib/ftl/functional/make_copyable.h"
 #include "lib/ftl/time/time_delta.h"
 
@@ -144,7 +146,6 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
         }
       });
   _platformView->SetupResourceContextOnIOThread();
-  _platformView->SetupPlayer();
   _localizationChannel.reset([[FlutterMethodChannel alloc]
          initWithName:@"flutter/localization"
       binaryMessenger:self
@@ -185,7 +186,6 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
   [_textInputChannel.get() setMethodCallHandler:^(FlutterMethodCall* call, FlutterResult result) {
     [_textInputPlugin.get() handleMethodCall:call result:result];
   }];
-
   [self setupNotificationCenterObservers];
 }
 
@@ -769,4 +769,15 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
   NSAssert(channel, @"The channel must not be null");
   _platformView->platform_message_router().SetMessageHandler(channel.UTF8String, handler);
 }
+
+#pragma mark - FlutterExternalImageRegistry
+
+- (NSUInteger)registerExternalImage:(NSObject<FlutterExternalImage>*)image {
+  return flow::ExternalImage::RegisterExternalImage(new shell::IOSExternalImageGL(image));
+}
+
+- (void)unregisterExternalImage:(NSUInteger)imageId {
+  flow::ExternalImage::DisposeExternalImage(imageId);
+}
+
 @end

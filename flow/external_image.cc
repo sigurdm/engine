@@ -8,20 +8,20 @@ namespace flow {
 
 static std::map<int, ExternalImage*> mapping = {};
 
-int ExternalImage::registerExternalImage(ExternalImage* image) {
+int ExternalImage::RegisterExternalImage(ExternalImage* image) {
     int id = mapping.size() + 1;
     mapping[id] = image;
     image->image_id_ = id;
     return id;
 }
 
-void ExternalImage::disposeExternalImage(int id) {
+void ExternalImage::DisposeExternalImage(int id) {
   ExternalImage* image = mapping[id];
   mapping.erase(id);
   delete image;
 }
 
-ExternalImage* ExternalImage::getExternalImage(int id) {
+ExternalImage* ExternalImage::GetExternalImage(int id) {
   return mapping[id];
 }
 

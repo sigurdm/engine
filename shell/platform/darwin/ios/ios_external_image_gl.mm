@@ -13,18 +13,8 @@
 namespace shell {
 
 IOSExternalImageGL::~IOSExternalImageGL(){}
-IOSExternalImageGL::IOSExternalImageGL(PlatformViewIOS* view): view_(view) {
-  FTL_LOG(INFO) << "Creating ext image for " << view_;
-  ftl::AutoResetWaitableEvent latch;
-  blink::Threads::IO()->PostTask([this, &latch]() {
-    FTL_LOG(INFO) << "EAGLContext " << [EAGLContext currentContext];
-    CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, [EAGLContext currentContext], NULL, &cache_);
-    if (err != noErr) {
-      FTL_LOG(INFO) << "Failed to create GLES texture cache: " << err;
-    }
-    latch.Signal();
-  });
-  latch.Wait();
+IOSExternalImageGL::IOSExternalImageGL(NSObject<FlutterExternalImage>* image): image_(image) {
+  FTL_DCHECK(image);
 }
 
 sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext *grContext) {
@@ -32,7 +22,13 @@ sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext 
   CVPixelBufferRef buffer;
   ftl::AutoResetWaitableEvent latch;
   blink::Threads::IO()->PostTask([this, &latch, &buffer]() {
-    buffer = PlatformViewIOS::GetPixelBuffer(image_id());
+    if (cache_ == nullptr) {
+      CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, [EAGLContext currentContext], NULL, &cache_);
+      if (err != noErr) {
+        FTL_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
+      }
+    }
+    buffer = [image_ getImage];
     latch.Signal();
   });
   latch.Wait();
@@ -50,7 +46,7 @@ sk_sp<SkImage> IOSExternalImageGL::MakeSkImage(int width, int height, GrContext 
       &texture_);
       CFRelease(buffer);
     if (err != noErr) {
-      FTL_LOG(INFO) << "Could not create texture from pixel buffer: " << err;
+      FTL_LOG(WARNING) << "Could not create texture from pixel buffer: " << err;
       return nullptr;
     }
   }

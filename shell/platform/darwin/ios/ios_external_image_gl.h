@@ -8,6 +8,7 @@
 #import <OpenGLES/ES2/glext.h>
 #include "flutter/flow/external_image.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterExternalImage.h"
 
 #ifndef FLUTTER_SHELL_PLATFORM_IOS_EXTERNAL_IMAGE_GL_H_
 #define FLUTTER_SHELL_PLATFORM_IOS_EXTERNAL_IMAGE_GL_H_
@@ -16,7 +17,7 @@ namespace shell {
 
 class IOSExternalImageGL : public flow::ExternalImage {
  public:
-  IOSExternalImageGL(PlatformViewIOS* view);
+  IOSExternalImageGL(NSObject<FlutterExternalImage>* image);
 
   ~IOSExternalImageGL() override;
 
@@ -24,8 +25,8 @@ class IOSExternalImageGL : public flow::ExternalImage {
   virtual sk_sp<SkImage> MakeSkImage(int width, int height, GrContext *grContext) override;
 
  private:
-  PlatformViewIOS* view_;
-  CVOpenGLESTextureCacheRef cache_;
+  NSObject<FlutterExternalImage>* image_;
+  CVOpenGLESTextureCacheRef cache_ = nullptr;
   CVOpenGLESTextureRef texture_ = nullptr;
   FTL_DISALLOW_COPY_AND_ASSIGN(IOSExternalImageGL);
 };

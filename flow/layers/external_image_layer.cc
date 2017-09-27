@@ -25,7 +25,7 @@ void ExternalImageLayer::Preroll(PrerollContext* context, const SkMatrix& matrix
 }
 
 void ExternalImageLayer::Paint(PaintContext& context) {
-  ExternalImage* image = ExternalImage::getExternalImage(image_id_);
+  ExternalImage* image = ExternalImage::GetExternalImage(image_id_);
   if (image == nullptr) {
     FTL_DLOG(INFO) << "No external image!";
     return;

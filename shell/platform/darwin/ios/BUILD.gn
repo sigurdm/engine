@@ -21,6 +21,7 @@ shared_library("flutter_framework_dylib") {
     "framework/Headers/FlutterChannels.h",
     "framework/Headers/FlutterCodecs.h",
     "framework/Headers/FlutterDartProject.h",
+    "framework/Headers/FlutterExternalImage.h",
     "framework/Headers/FlutterMacros.h",
     "framework/Headers/FlutterPlugin.h",
     "framework/Headers/FlutterViewController.h",
@@ -93,7 +94,6 @@ shared_library("flutter_framework_dylib") {
     "CoreVideo.framework",
     "UIKit.framework",
     "OpenGLES.framework",
-    "AVFoundation.framework",
     "AudioToolbox.framework",
     "QuartzCore.framework",
   ]
@@ -168,6 +168,7 @@ copy("framework_headers") {
     "framework/Headers/FlutterChannels.h",
     "framework/Headers/FlutterCodecs.h",
     "framework/Headers/FlutterDartProject.h",
+    "framework/Headers/FlutterExternalImage.h",
     "framework/Headers/FlutterMacros.h",
     "framework/Headers/FlutterPlugin.h",
     "framework/Headers/FlutterViewController.h",

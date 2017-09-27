@@ -221,6 +221,14 @@
   return nil;
 }
 
+- (NSObject<FlutterExternalImageRegistry>*)externalImageRegistry {
+  UIViewController* rootViewController = _window.rootViewController;
+  if ([rootViewController conformsToProtocol:@protocol(FlutterExternalImageRegistry)]) {
+    return (NSObject<FlutterExternalImageRegistry>*)rootViewController;
+  }
+  return nil;
+}
+
 - (NSObject<FlutterPluginRegistrar>*)registrarForPlugin:(NSString*)pluginKey {
   NSAssert(self.pluginPublications[pluginKey] == nil, @"Duplicate plugin key: %@", pluginKey);
   self.pluginPublications[pluginKey] = [NSNull null];
@@ -258,6 +266,10 @@
 
 - (NSObject<FlutterBinaryMessenger>*)messenger {
   return [_appDelegate binaryMessenger];
+}
+
+- (NSObject<FlutterExternalImageRegistry>*)externalImageRegistry {
+  return [_appDelegate externalImageRegistry];
 }
 
 - (void)publish:(NSObject*)value {

@@ -3,25 +3,19 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
-#include "flutter/shell/platform/darwin/ios/ios_external_image_gl.h"
 
-#import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
 #include <utility>
 
 #include "flutter/common/threads.h"
 #include "flutter/fml/trace_event.h"
-#include "flutter/flow/external_image.h"
 #include "flutter/shell/gpu/gpu_rasterizer.h"
 #include "flutter/shell/platform/darwin/common/process_info_mac.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "lib/ftl/synchronization/waitable_event.h"
 
 namespace shell {
-
-AVPlayer* player;
-AVPlayerItemVideoOutput* videoOutput;
 
 PlatformViewIOS::PlatformViewIOS(CALayer* layer)
     : PlatformView(std::make_unique<GPURasterizer>(std::make_unique<ProcessInfoMac>())),
@@ -30,53 +24,6 @@ PlatformViewIOS::PlatformViewIOS(CALayer* layer)
 }
 
 PlatformViewIOS::~PlatformViewIOS() = default;
-
-void PlatformViewIOS::SetupPlayer() {
-  IOSExternalImageGL* image = new IOSExternalImageGL(this);
-  flow::ExternalImage::registerExternalImage(image);
-  player = [[AVPlayer alloc] init];
-  player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
-  [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
-                                                    object:[player currentItem]
-                                                     queue:[NSOperationQueue mainQueue]
-                                                usingBlock:^(NSNotification *note) {
-    AVPlayerItem *p = [note object];
-    [p seekToTime:kCMTimeZero];
-  }];
-  NSDictionary *pixBuffAttributes = @{
-    (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA),
-    (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
-  };
-  videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pixBuffAttributes];
-  AVPlayerItem *item = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:@"http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_10mb.mp4"]];
-  AVAsset *asset = [item asset];
-  [asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:^{
-      if ([asset statusOfValueForKey:@"tracks" error:nil] == AVKeyValueStatusLoaded) {
-          NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
-          if ([tracks count] > 0) {
-              AVAssetTrack *videoTrack = [tracks objectAtIndex:0];
-              [videoTrack loadValuesAsynchronouslyForKeys:@[@"preferredTransform"] completionHandler:^{
-                  if ([videoTrack statusOfValueForKey:@"preferredTransform" error:nil] == AVKeyValueStatusLoaded) {
-                      dispatch_async(dispatch_get_main_queue(), ^{
-                          [item addOutput:videoOutput];
-                          [player replaceCurrentItemWithPlayerItem:item];
-                          [player play];
-                      });
-                  }
-              }];
-          }
-      }
-  }];
-}
-
-CVPixelBufferRef PlatformViewIOS::GetPixelBuffer(int image_id) {
-  CMTime outputItemTime = [videoOutput itemTimeForHostTime:CACurrentMediaTime()];
-  if ([videoOutput hasNewPixelBufferForItemTime:outputItemTime]) {
-    CVPixelBufferRef ref = [videoOutput copyPixelBufferForItemTime:outputItemTime itemTimeForDisplay:NULL];
-    return ref;
-  }
-  return nullptr;
-}
 
 void PlatformViewIOS::Attach() {
   Attach(NULL);
