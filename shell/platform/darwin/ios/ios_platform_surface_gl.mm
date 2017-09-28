@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/darwin/ios/ios_platform_surface_gl.h"
+#include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "flutter/common/threads.h"
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/core/SkSurface.h"
@@ -13,11 +14,11 @@
 namespace shell {
 
 IOSPlatformSurfaceGL::~IOSPlatformSurfaceGL() {
-  // TODO(sigurdm, mravn): dispose cache.
+  // TODO(sigurdm, mravn): dispose cache
 }
 
 IOSPlatformSurfaceGL::IOSPlatformSurfaceGL(NSObject<FlutterPlatformSurface>* surface): surface_(surface) {
-  FTL_DCHECK(surface);
+  FTL_DCHECK(surface_);
 }
 
 sk_sp<SkImage> IOSPlatformSurfaceGL::MakeSkImage(int width, int height, GrContext *grContext) {

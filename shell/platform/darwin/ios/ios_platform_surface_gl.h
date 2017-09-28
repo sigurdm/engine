@@ -7,7 +7,6 @@
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
 #include "flutter/flow/platform_surface.h"
-#include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterPlatformSurface.h"
 
 #ifndef FLUTTER_SHELL_PLATFORM_IOS_PLATFORM_SURFACE_GL_H_

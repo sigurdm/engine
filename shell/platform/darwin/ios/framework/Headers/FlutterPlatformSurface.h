@@ -14,13 +14,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 FLUTTER_EXPORT
 @protocol FlutterPlatformSurface<NSObject>
-- (BOOL)hasNewPixelBuffer;
 - (CVPixelBufferRef)getPixelBuffer;
 @end
 
 FLUTTER_EXPORT
 @protocol FlutterPlatformSurfaceRegistry<NSObject>
 - (NSUInteger)registerPlatformSurface:(NSObject<FlutterPlatformSurface>*)surface;
+- (void)newPlatformSurfaceFrameAvailable:(NSUInteger)surfaceId;
 - (void)unregisterPlatformSurface:(NSUInteger)surfaceId;
 @end
 

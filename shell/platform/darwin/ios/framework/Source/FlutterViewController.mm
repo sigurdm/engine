@@ -780,4 +780,7 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
   flow::PlatformSurface::DisposePlatformSurface(surfaceId);
 }
 
+- (void)newPlatformSurfaceFrameAvailable:(NSUInteger)surfaceId {
+  _platformView->ScheduleFrame();
+}
 @end
