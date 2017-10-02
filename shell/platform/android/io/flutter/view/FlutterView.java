@@ -610,8 +610,9 @@ public class FlutterView extends SurfaceView
 
     public long createSurfaceTexture() {
         final long surfaceId = nativeAllocatePlatformSurface(mNativePlatformView);
-        final long textureId = nativeGetPlatformSurfaceTextureID(mNativePlatformView, surfaceId);
-        surfaceIdToSurfaceTexture.put(surfaceId, new SurfaceTexture((int)textureId));
+        final SurfaceTexture surfaceTexture = new SurfaceTexture(0);
+        surfaceTexture.detachFromGLContext();
+        surfaceIdToSurfaceTexture.put(surfaceId, surfaceTexture);
         return surfaceId;
     }
 
@@ -697,8 +698,6 @@ public class FlutterView extends SurfaceView
     private static native void nativeMarkPlatformSurfaceFrameAvailable(long nativePlatformViewAndroid, long surfaceId);
 
     private static native void nativeReleasePlatformSurface(long nativePlatformViewAndroid, long surfaceId);
-
-    private static native long nativeGetPlatformSurfaceTextureID(long nativePlatformViewAndroid, long surfaceId);
 
     private void updateViewportMetrics() {
         if (!isAttached())
@@ -790,8 +789,14 @@ public class FlutterView extends SurfaceView
     }
 
     // Called by native to get a new frame on an platformSurface.
-    private void updateTexImage(long surfaceId) {
-        surfaceIdToSurfaceTexture.get(surfaceId).updateTexImage();
+    private void updateTexImage(long surfaceId, long textureId, boolean isNew) {
+        final SurfaceTexture surfaceTexture = surfaceIdToSurfaceTexture.get(surfaceId);
+        if (isNew) {
+          surfaceTexture.attachToGLContext((int) textureId);
+          surfaceTexture.updateTexImage();
+        } else {
+          surfaceTexture.detachFromGLContext();
+        }
     }
 
     // ACCESSIBILITY
