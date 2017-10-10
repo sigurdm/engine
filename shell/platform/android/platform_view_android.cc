@@ -514,9 +514,10 @@ void PlatformViewAndroid::RunFromSource(const std::string& assets_directory,
   fml::jni::DetachFromVM();
 }
 
-size_t PlatformViewAndroid::CreatePlatformSurface() {
+size_t PlatformViewAndroid::CreatePlatformSurface(
+    const fml::jni::JavaObjectWeakGlobalRef& surface_texture) {
   return RegisterPlatformSurface(
-      std::make_shared<AndroidPlatformSurfaceGL>(this));
+      std::make_shared<AndroidPlatformSurfaceGL>(surface_texture));
 }
 
 void PlatformViewAndroid::MarkPlatformSurfaceFrameAvailable(size_t surface_id) {
@@ -526,36 +527,13 @@ void PlatformViewAndroid::MarkPlatformSurfaceFrameAvailable(size_t surface_id) {
         static_pointer_cast<AndroidPlatformSurfaceGL>(
             rasterizer_->GetPlatformSurfaceRegistry().GetPlatformSurface(
                 surface_id));
-    surface->MarkNewFrameAvailable();
+    if (surface) {
+      surface->MarkNewFrameAvailable();
+    }
     latch.Signal();
   });
   latch.Wait();
   PlatformView::MarkPlatformSurfaceFrameAvailable(surface_id);
-}
-
-void PlatformViewAndroid::AttachTexImage(size_t surface_id,
-                                         uint32_t texture_id) {
-  JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> view = flutter_view_.get(env);
-  if (!view.is_null()) {
-    FlutterViewAttachTexImage(env, view.obj(), surface_id, texture_id);
-  }
-}
-
-void PlatformViewAndroid::UpdateTexImage(size_t surface_id) {
-  JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> view = flutter_view_.get(env);
-  if (!view.is_null()) {
-    FlutterViewUpdateTexImage(env, view.obj(), surface_id);
-  }
-}
-
-void PlatformViewAndroid::DetachTexImage(size_t surface_id) {
-  JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> view = flutter_view_.get(env);
-  if (!view.is_null()) {
-    FlutterViewDetachTexImage(env, view.obj(), surface_id);
-  }
 }
 
 fml::jni::ScopedJavaLocalRef<jobject> PlatformViewAndroid::GetBitmap(
