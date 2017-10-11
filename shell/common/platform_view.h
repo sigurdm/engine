@@ -79,8 +79,6 @@ class PlatformView : public std::enable_shared_from_this<PlatformView> {
   void CreateEngine();
   void PostAddToShellTask();
 
-  void ScheduleFrame();
-
   void SetupResourceContextOnIOThreadPerform(
       fxl::AutoResetWaitableEvent* event);
 

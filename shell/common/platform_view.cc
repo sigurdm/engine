@@ -127,13 +127,6 @@ VsyncWaiter* PlatformView::GetVsyncWaiter() {
 
 void PlatformView::UpdateSemantics(std::vector<blink::SemanticsNode> update) {}
 
-void PlatformView::ScheduleFrame() {
-  blink::Threads::UI()->PostTask([engine = engine_->GetWeakPtr()] {
-    if (engine)
-      engine->ScheduleFrame();
-  });
-}
-
 void PlatformView::HandlePlatformMessage(
     fxl::RefPtr<blink::PlatformMessage> message) {
   if (auto response = message->response())
@@ -162,7 +155,10 @@ void PlatformView::UnregisterTexture(size_t texture_id) {
 
 void PlatformView::MarkTextureFrameAvailable(size_t texture_id) {
   // TODO(mravn, sigurdm): Avoid involving Dart in this.
-  ScheduleFrame();
+  blink::Threads::UI()->PostTask([engine = engine_->GetWeakPtr()] {
+    if (engine)
+      engine->ScheduleFrame();
+  });
 }
 
 void PlatformView::SetupResourceContextOnIOThread() {
