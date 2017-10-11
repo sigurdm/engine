@@ -218,11 +218,11 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return blink::Settings::Get().enable_software_rendering;
 }
 
-static jlong CreateExternalTexture(JNIEnv* env,
-                                   jobject jcaller,
-                                   jlong platform_view,
-                                   jobject surface_texture) {
-  return PLATFORM_VIEW->CreateExternalTexture(
+static jlong RegisterTexture(JNIEnv* env,
+                             jobject jcaller,
+                             jlong platform_view,
+                             jobject surface_texture) {
+  return PLATFORM_VIEW->RegisterExternalTexture(
       fml::jni::JavaObjectWeakGlobalRef(env, surface_texture));
 }
 
@@ -233,10 +233,10 @@ static void MarkTextureFrameAvailable(JNIEnv* env,
   return PLATFORM_VIEW->MarkTextureFrameAvailable(textureId);
 }
 
-static void DestroyExternalTexture(JNIEnv* env,
-                                   jobject jcaller,
-                                   jlong platform_view,
-                                   jlong textureId) {
+static void UnregisterTexture(JNIEnv* env,
+                              jobject jcaller,
+                              jlong platform_view,
+                              jlong textureId) {
   PLATFORM_VIEW->UnregisterTexture(textureId);
 }
 
@@ -371,9 +371,9 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
       {
-          .name = "nativeCreateTexture",
+          .name = "nativeRegisterTexture",
           .signature = "(JLandroid/graphics/SurfaceTexture;)J",
-          .fnPtr = reinterpret_cast<void*>(&shell::CreateExternalTexture),
+          .fnPtr = reinterpret_cast<void*>(&shell::RegisterTexture),
       },
       {
           .name = "nativeMarkTextureFrameAvailable",
@@ -381,9 +381,9 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::MarkTextureFrameAvailable),
       },
       {
-          .name = "nativeDestroyTexture",
+          .name = "nativeUnregisterTexture",
           .signature = "(JJ)V",
-          .fnPtr = reinterpret_cast<void*>(&shell::DestroyExternalTexture),
+          .fnPtr = reinterpret_cast<void*>(&shell::UnregisterTexture),
       },
   };
 

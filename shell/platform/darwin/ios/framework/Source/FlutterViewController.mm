@@ -780,7 +780,7 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
 #pragma mark - FlutterTextureRegistry
 
 - (NSUInteger)registerTexture:(NSObject<FlutterTexture>*)texture {
-  return _platformView->CreateExternalTexture(texture);
+  return _platformView->RegisterExternalTexture(texture);
 }
 
 - (void)unregisterTexture:(NSUInteger)textureId {

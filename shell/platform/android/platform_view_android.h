@@ -97,7 +97,7 @@ class PlatformViewAndroid : public PlatformView {
                      const std::string& main,
                      const std::string& packages) override;
 
-  size_t CreateExternalTexture(
+  size_t RegisterExternalTexture(
       const fml::jni::JavaObjectWeakGlobalRef& surface_texture);
 
   void MarkTextureFrameAvailable(size_t texture_id) override;

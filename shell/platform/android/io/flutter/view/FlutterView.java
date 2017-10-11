@@ -288,7 +288,7 @@ public class FlutterView extends SurfaceView
       message.put("textScaleFactor", textScaleFactor);
       mFlutterSystemChannel.send(message);
     }
-    
+
     private void setLocale(Locale locale) {
         mFlutterLocalizationChannel.invokeMethod("setLocale",
             Arrays.asList(locale.getLanguage(), locale.getCountry()));
@@ -665,11 +665,11 @@ public class FlutterView extends SurfaceView
 
     private static native boolean nativeGetIsSoftwareRenderingEnabled();
 
-    private static native long nativeCreateTexture(long nativePlatformViewAndroid, SurfaceTexture surfaceTexture);
+    private static native long nativeRegisterTexture(long nativePlatformViewAndroid, SurfaceTexture surfaceTexture);
 
     private static native void nativeMarkTextureFrameAvailable(long nativePlatformViewAndroid, long textureId);
 
-    private static native void nativeDestroyTexture(long nativePlatformViewAndroid, long textureId);
+    private static native void nativeUnregisterTexture(long nativePlatformViewAndroid, long textureId);
 
     private void updateViewportMetrics() {
         if (!isAttached())
@@ -951,7 +951,7 @@ public class FlutterView extends SurfaceView
     public SurfaceTextureHandle createSurfaceTexture() {
         final SurfaceTexture surfaceTexture = new SurfaceTexture(0);
         surfaceTexture.detachFromGLContext();
-        final long id = nativeCreateTexture(mNativePlatformView, surfaceTexture);
+        final long id = nativeRegisterTexture(mNativePlatformView, surfaceTexture);
         final SurfaceTextureHandle handle = new SurfaceTextureHandle(id, surfaceTexture);
         surfaceTextureHandles.put(id, handle);
         return handle;
@@ -993,7 +993,7 @@ public class FlutterView extends SurfaceView
          * Releases the managed SurfaceTexture.
          */
         public void release() {
-            nativeDestroyTexture(mNativePlatformView, id);
+            nativeUnregisterTexture(mNativePlatformView, id);
             surfaceTextureHandles.remove(id);
             surfaceTexture.release();
         }

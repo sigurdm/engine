@@ -514,7 +514,7 @@ void PlatformViewAndroid::RunFromSource(const std::string& assets_directory,
   fml::jni::DetachFromVM();
 }
 
-size_t PlatformViewAndroid::CreateExternalTexture(
+size_t PlatformViewAndroid::RegisterExternalTexture(
     const fml::jni::JavaObjectWeakGlobalRef& surface_texture) {
   return RegisterTexture(
       std::make_shared<AndroidExternalTextureGL>(surface_texture));
