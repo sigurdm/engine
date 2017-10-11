@@ -63,7 +63,8 @@ void AndroidExternalTextureGL::OnGrContextDestroyed() {
 
 void AndroidExternalTextureGL::Attach(jint textureName) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture =
+      surface_texture_.get(env);
   if (!surfaceTexture.is_null()) {
     SurfaceTextureAttachToGLContext(env, surfaceTexture.obj(), textureName);
   }
@@ -71,7 +72,8 @@ void AndroidExternalTextureGL::Attach(jint textureName) {
 
 void AndroidExternalTextureGL::Update() {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture =
+      surface_texture_.get(env);
   if (!surfaceTexture.is_null()) {
     SurfaceTextureUpdateTexImage(env, surfaceTexture.obj());
   }
@@ -79,7 +81,8 @@ void AndroidExternalTextureGL::Update() {
 
 void AndroidExternalTextureGL::Detach() {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture =
+      surface_texture_.get(env);
   if (!surfaceTexture.is_null()) {
     SurfaceTextureDetachFromGLContext(env, surfaceTexture.obj());
   }

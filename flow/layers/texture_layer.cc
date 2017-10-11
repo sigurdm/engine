@@ -12,8 +12,7 @@ TextureLayer::TextureLayer() = default;
 
 TextureLayer::~TextureLayer() = default;
 
-void TextureLayer::Preroll(PrerollContext* context,
-                           const SkMatrix& matrix) {
+void TextureLayer::Preroll(PrerollContext* context, const SkMatrix& matrix) {
   set_paint_bounds(SkRect::MakeXYWH(offset_.x(), offset_.y(), size_.width(),
                                     size_.height()));
 }

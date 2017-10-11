@@ -9,9 +9,9 @@
 #include <string>
 
 #include "flutter/flow/instrumentation.h"
-#include "flutter/flow/texture.h"
 #include "flutter/flow/process_info.h"
 #include "flutter/flow/raster_cache.h"
+#include "flutter/flow/texture.h"
 #include "lib/fxl/macros.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkPictureRecorder.h"
@@ -62,9 +62,7 @@ class CompositorContext {
 
   RasterCache& raster_cache() { return raster_cache_; }
 
-  TextureRegistry& texture_registry() {
-    return texture_registry_;
-  }
+  TextureRegistry& texture_registry() { return texture_registry_; }
 
   const Counter& frame_count() const { return frame_count_; }
 
