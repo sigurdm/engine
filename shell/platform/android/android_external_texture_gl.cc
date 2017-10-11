@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/shell/platform/android/android_platform_surface_gl.h"
+#include "flutter/shell/platform/android/android_external_texture_gl.h"
 
-#include <GLES/gl.h>
 #include <GLES/glext.h>
 
 #include "flutter/common/threads.h"
@@ -14,23 +13,23 @@
 
 namespace shell {
 
-AndroidPlatformSurfaceGL::AndroidPlatformSurfaceGL(
-    const fml::jni::JavaObjectWeakGlobalRef& surface_texture)
-    : surface_texture_(surface_texture) {}
+AndroidExternalTextureGL::AndroidExternalTextureGL(
+    const fml::jni::JavaObjectWeakGlobalRef& surfaceTexture)
+    : surface_texture_(surfaceTexture) {}
 
-AndroidPlatformSurfaceGL::~AndroidPlatformSurfaceGL() = default;
+AndroidExternalTextureGL::~AndroidExternalTextureGL() = default;
 
-void AndroidPlatformSurfaceGL::OnGrContextCreated() {
+void AndroidExternalTextureGL::OnGrContextCreated() {
   ASSERT_IS_GPU_THREAD;
   state_ = AttachmentState::uninitialized;
 }
 
-void AndroidPlatformSurfaceGL::MarkNewFrameAvailable() {
+void AndroidExternalTextureGL::MarkNewFrameAvailable() {
   ASSERT_IS_GPU_THREAD;
   new_frame_ready_ = true;
 }
 
-sk_sp<SkImage> AndroidPlatformSurfaceGL::MakeSkImage(int width,
+sk_sp<SkImage> AndroidExternalTextureGL::MakeSkImage(int width,
                                                      int height,
                                                      GrContext* grContext) {
   ASSERT_IS_GPU_THREAD;
@@ -38,15 +37,15 @@ sk_sp<SkImage> AndroidPlatformSurfaceGL::MakeSkImage(int width,
     return nullptr;
   }
   if (state_ == AttachmentState::uninitialized) {
-    glGenTextures(1, &texture_id_);
-    Attach(static_cast<jint>(texture_id_));
+    glGenTextures(1, &texture_name_);
+    Attach(static_cast<jint>(texture_name_));
     state_ = AttachmentState::attached;
   }
   if (new_frame_ready_) {
     Update();
     new_frame_ready_ = false;
   }
-  GrGLTextureInfo textureInfo = {GL_TEXTURE_EXTERNAL_OES, texture_id_};
+  GrGLTextureInfo textureInfo = {GL_TEXTURE_EXTERNAL_OES, texture_name_};
   GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig,
                                   textureInfo);
   return SkImage::MakeFromTexture(grContext, backendTexture,
@@ -54,7 +53,7 @@ sk_sp<SkImage> AndroidPlatformSurfaceGL::MakeSkImage(int width,
                                   SkAlphaType::kPremul_SkAlphaType, nullptr);
 }
 
-void AndroidPlatformSurfaceGL::OnGrContextDestroyed() {
+void AndroidExternalTextureGL::OnGrContextDestroyed() {
   ASSERT_IS_GPU_THREAD;
   if (state_ == AttachmentState::attached) {
     Detach();
@@ -62,27 +61,27 @@ void AndroidPlatformSurfaceGL::OnGrContextDestroyed() {
   state_ = AttachmentState::detached;
 }
 
-void AndroidPlatformSurfaceGL::Attach(jint texture_id) {
+void AndroidExternalTextureGL::Attach(jint textureName) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> texture = surface_texture_.get(env);
-  if (!texture.is_null()) {
-    SurfaceTextureAttachToGLContext(env, texture.obj(), texture_id);
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  if (!surfaceTexture.is_null()) {
+    SurfaceTextureAttachToGLContext(env, surfaceTexture.obj(), textureName);
   }
 }
 
-void AndroidPlatformSurfaceGL::Update() {
+void AndroidExternalTextureGL::Update() {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> texture = surface_texture_.get(env);
-  if (!texture.is_null()) {
-    SurfaceTextureUpdateTexImage(env, texture.obj());
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  if (!surfaceTexture.is_null()) {
+    SurfaceTextureUpdateTexImage(env, surfaceTexture.obj());
   }
 }
 
-void AndroidPlatformSurfaceGL::Detach() {
+void AndroidExternalTextureGL::Detach() {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  fml::jni::ScopedJavaLocalRef<jobject> texture = surface_texture_.get(env);
-  if (!texture.is_null()) {
-    SurfaceTextureDetachFromGLContext(env, texture.obj());
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture = surface_texture_.get(env);
+  if (!surfaceTexture.is_null()) {
+    SurfaceTextureDetachFromGLContext(env, surfaceTexture.obj());
   }
 }
 

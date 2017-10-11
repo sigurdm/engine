@@ -58,11 +58,11 @@ CompositorContext::ScopedFrame::~ScopedFrame() {
 }
 
 void CompositorContext::OnGrContextCreated() {
-  platform_surface_registry_.OnGrContextCreated();
+  texture_registry_.OnGrContextCreated();
 }
 
 void CompositorContext::OnGrContextDestroyed() {
-  platform_surface_registry_.OnGrContextDestroyed();
+  texture_registry_.OnGrContextDestroyed();
   raster_cache_.Clear();
 }
 

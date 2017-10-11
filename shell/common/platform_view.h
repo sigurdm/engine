@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "flutter/flow/platform_surface.h"
+#include "flutter/flow/texture.h"
 #include "flutter/lib/ui/semantics/semantics_node.h"
 #include "flutter/shell/common/engine.h"
 #include "flutter/shell/common/shell.h"
@@ -62,10 +62,9 @@ class PlatformView : public std::enable_shared_from_this<PlatformView> {
   virtual void HandlePlatformMessage(
       fxl::RefPtr<blink::PlatformMessage> message);
 
-  size_t RegisterPlatformSurface(
-      std::shared_ptr<flow::PlatformSurface> surface);
-  void UnregisterPlatformSurface(size_t surface_id);
-  virtual void MarkPlatformSurfaceFrameAvailable(size_t surface_id);
+  size_t RegisterTexture(std::shared_ptr<flow::Texture> texture);
+  void UnregisterTexture(size_t texture_id);
+  virtual void MarkTextureFrameAvailable(size_t texture_id);
 
   Rasterizer& rasterizer() { return *rasterizer_; }
   Engine& engine() { return *engine_; }

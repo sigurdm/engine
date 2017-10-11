@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "flutter/common/threads.h"
-#include "flutter/flow/platform_surface.h"
+#include "flutter/flow/texture.h"
 #include "flutter/fml/platform/darwin/platform_version.h"
 #include "flutter/fml/platform/darwin/scoped_block.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
@@ -20,7 +20,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterTextInputPlugin.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_main_ios.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_touch_mapper.h"
-#include "flutter/shell/platform/darwin/ios/ios_platform_surface_gl.h"
+#include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 #include "lib/fxl/functional/make_copyable.h"
 #include "lib/fxl/time/time_delta.h"
@@ -777,17 +777,17 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
   _platformView->platform_message_router().SetMessageHandler(channel.UTF8String, handler);
 }
 
-#pragma mark - FlutterPlatformSurfaceRegistry
+#pragma mark - FlutterTextureRegistry
 
-- (NSUInteger)registerPlatformSurface:(NSObject<FlutterPlatformSurface>*)surface {
-  return _platformView->CreatePlatformSurface(surface);
+- (NSUInteger)registerTexture:(NSObject<FlutterTexture>*)texture {
+  return _platformView->CreateExternalTexture(texture);
 }
 
-- (void)unregisterPlatformSurface:(NSUInteger)surfaceId {
-  _platformView->UnregisterPlatformSurface(surfaceId);
+- (void)unregisterTexture:(NSUInteger)textureId {
+  _platformView->UnregisterTexture(textureId);
 }
 
-- (void)platformSurfaceFrameAvailable:(NSUInteger)surfaceId {
-  _platformView->MarkPlatformSurfaceFrameAvailable(surfaceId);
+- (void)textureFrameAvailable:(NSUInteger)textureId {
+  _platformView->MarkTextureFrameAvailable(textureId);
 }
 @end

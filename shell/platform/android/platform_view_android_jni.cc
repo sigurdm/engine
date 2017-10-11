@@ -3,12 +3,13 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
+
 #include "flutter/common/settings.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 #include "flutter/fml/platform/android/scoped_java_ref.h"
 #include "flutter/runtime/dart_service_isolate.h"
-#include "flutter/shell/platform/android/android_platform_surface_gl.h"
+#include "flutter/shell/platform/android/android_external_texture_gl.h"
 #include "lib/fxl/arraysize.h"
 #include "lib/fxl/logging.h"
 
@@ -217,26 +218,26 @@ static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return blink::Settings::Get().enable_software_rendering;
 }
 
-static jlong CreatePlatformSurface(JNIEnv* env,
+static jlong CreateExternalTexture(JNIEnv* env,
                                    jobject jcaller,
                                    jlong platform_view,
                                    jobject surface_texture) {
-  return PLATFORM_VIEW->CreatePlatformSurface(
+  return PLATFORM_VIEW->CreateExternalTexture(
       fml::jni::JavaObjectWeakGlobalRef(env, surface_texture));
 }
 
-static void MarkPlatformSurfaceFrameAvailable(JNIEnv* env,
-                                              jobject jcaller,
-                                              jlong platform_view,
-                                              jlong surfaceId) {
-  return PLATFORM_VIEW->MarkPlatformSurfaceFrameAvailable(surfaceId);
+static void MarkTextureFrameAvailable(JNIEnv* env,
+                                      jobject jcaller,
+                                      jlong platform_view,
+                                      jlong textureId) {
+  return PLATFORM_VIEW->MarkTextureFrameAvailable(textureId);
 }
 
-static void DestroyPlatformSurface(JNIEnv* env,
+static void DestroyExternalTexture(JNIEnv* env,
                                    jobject jcaller,
                                    jlong platform_view,
-                                   jlong surfaceId) {
-  PLATFORM_VIEW->UnregisterPlatformSurface(surfaceId);
+                                   jlong textureId) {
+  PLATFORM_VIEW->UnregisterTexture(textureId);
 }
 
 static void InvokePlatformMessageResponseCallback(JNIEnv* env,
@@ -370,20 +371,19 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
       },
       {
-          .name = "nativeCreatePlatformSurface",
+          .name = "nativeCreateTexture",
           .signature = "(JLandroid/graphics/SurfaceTexture;)J",
-          .fnPtr = reinterpret_cast<void*>(&shell::CreatePlatformSurface),
+          .fnPtr = reinterpret_cast<void*>(&shell::CreateExternalTexture),
       },
       {
-          .name = "nativeMarkPlatformSurfaceFrameAvailable",
+          .name = "nativeMarkTextureFrameAvailable",
           .signature = "(JJ)V",
-          .fnPtr = reinterpret_cast<void*>(
-              &shell::MarkPlatformSurfaceFrameAvailable),
+          .fnPtr = reinterpret_cast<void*>(&shell::MarkTextureFrameAvailable),
       },
       {
-          .name = "nativeDestroyPlatformSurface",
+          .name = "nativeDestroyTexture",
           .signature = "(JJ)V",
-          .fnPtr = reinterpret_cast<void*>(&shell::DestroyPlatformSurface),
+          .fnPtr = reinterpret_cast<void*>(&shell::DestroyExternalTexture),
       },
   };
 

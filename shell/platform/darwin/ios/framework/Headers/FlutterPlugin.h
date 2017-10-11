@@ -10,7 +10,7 @@
 #include "FlutterBinaryMessenger.h"
 #include "FlutterChannels.h"
 #include "FlutterCodecs.h"
-#include "FlutterPlatformSurface.h"
+#include "FlutterTexture.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol FlutterPluginRegistrar;
@@ -144,12 +144,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSObject<FlutterBinaryMessenger>*)messenger;
 
 /**
- Returns a `FlutterPlatformSurfaceRegistry` for registering surfaces
+ Returns a `FlutterTextureRegistry` for registering textures
  provided by the plugin.
 
- - Returns: The surface registry.
+ - Returns: The texture registry.
  */
-- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry;
+- (NSObject<FlutterTextureRegistry>*)textureRegistry;
 
 /**
  Publishes a value for external use of the plugin.

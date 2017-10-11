@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "flutter/flow/instrumentation.h"
-#include "flutter/flow/platform_surface.h"
 #include "flutter/flow/raster_cache.h"
+#include "flutter/flow/texture.h"
 #include "flutter/glue/trace_event.h"
 #include "lib/fxl/build_config.h"
 #include "lib/fxl/logging.h"
@@ -57,7 +57,7 @@ class Layer {
     const Stopwatch& frame_time;
     const Stopwatch& engine_time;
     const CounterValues& memory_usage;
-    PlatformSurfaceRegistry& platform_surface_registry;
+    TextureRegistry& texture_registry;
     const bool checkerboard_offscreen_layers;
   };
 

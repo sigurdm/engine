@@ -17,7 +17,7 @@
 #include "flutter/fml/platform/android/scoped_java_ref.h"
 #include "flutter/runtime/dart_service_isolate.h"
 #include "flutter/shell/gpu/gpu_rasterizer.h"
-#include "flutter/shell/platform/android/android_platform_surface_gl.h"
+#include "flutter/shell/platform/android/android_external_texture_gl.h"
 #include "flutter/shell/platform/android/android_surface_gl.h"
 #include "flutter/shell/platform/android/android_surface_software.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
@@ -514,26 +514,25 @@ void PlatformViewAndroid::RunFromSource(const std::string& assets_directory,
   fml::jni::DetachFromVM();
 }
 
-size_t PlatformViewAndroid::CreatePlatformSurface(
+size_t PlatformViewAndroid::CreateExternalTexture(
     const fml::jni::JavaObjectWeakGlobalRef& surface_texture) {
-  return RegisterPlatformSurface(
-      std::make_shared<AndroidPlatformSurfaceGL>(surface_texture));
+  return RegisterTexture(
+      std::make_shared<AndroidExternalTextureGL>(surface_texture));
 }
 
-void PlatformViewAndroid::MarkPlatformSurfaceFrameAvailable(size_t surface_id) {
+void PlatformViewAndroid::MarkTextureFrameAvailable(size_t texture_id) {
   fxl::AutoResetWaitableEvent latch;
-  blink::Threads::Gpu()->PostTask([this, &latch, surface_id]() {
-    std::shared_ptr<AndroidPlatformSurfaceGL> surface =
-        static_pointer_cast<AndroidPlatformSurfaceGL>(
-            rasterizer_->GetPlatformSurfaceRegistry().GetPlatformSurface(
-                surface_id));
-    if (surface) {
-      surface->MarkNewFrameAvailable();
+  blink::Threads::Gpu()->PostTask([this, &latch, texture_id]() {
+    std::shared_ptr<AndroidExternalTextureGL> texture =
+        static_pointer_cast<AndroidExternalTextureGL>(
+            rasterizer_->GetTextureRegistry().GetTexture(texture_id));
+    if (texture) {
+      texture->MarkNewFrameAvailable();
     }
     latch.Signal();
   });
   latch.Wait();
-  PlatformView::MarkPlatformSurfaceFrameAvailable(surface_id);
+  PlatformView::MarkTextureFrameAvailable(texture_id);
 }
 
 fml::jni::ScopedJavaLocalRef<jobject> PlatformViewAndroid::GetBitmap(

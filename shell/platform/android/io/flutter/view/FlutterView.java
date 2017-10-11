@@ -665,11 +665,11 @@ public class FlutterView extends SurfaceView
 
     private static native boolean nativeGetIsSoftwareRenderingEnabled();
 
-    private static native long nativeCreatePlatformSurface(long nativePlatformViewAndroid, SurfaceTexture surfaceTexture);
+    private static native long nativeCreateTexture(long nativePlatformViewAndroid, SurfaceTexture surfaceTexture);
 
-    private static native void nativeMarkPlatformSurfaceFrameAvailable(long nativePlatformViewAndroid, long surfaceId);
+    private static native void nativeMarkTextureFrameAvailable(long nativePlatformViewAndroid, long textureId);
 
-    private static native void nativeDestroyPlatformSurface(long nativePlatformViewAndroid, long surfaceId);
+    private static native void nativeDestroyTexture(long nativePlatformViewAndroid, long textureId);
 
     private void updateViewportMetrics() {
         if (!isAttached())
@@ -951,9 +951,9 @@ public class FlutterView extends SurfaceView
     public SurfaceTextureHandle createSurfaceTexture() {
         final SurfaceTexture surfaceTexture = new SurfaceTexture(0);
         surfaceTexture.detachFromGLContext();
-        final long surfaceId = nativeCreatePlatformSurface(mNativePlatformView, surfaceTexture);
-        final SurfaceTextureHandle handle = new SurfaceTextureHandle(surfaceId, surfaceTexture);
-        surfaceTextureHandles.put(surfaceId, handle);
+        final long id = nativeCreateTexture(mNativePlatformView, surfaceTexture);
+        final SurfaceTextureHandle handle = new SurfaceTextureHandle(id, surfaceTexture);
+        surfaceTextureHandles.put(id, handle);
         return handle;
     }
 
@@ -961,16 +961,16 @@ public class FlutterView extends SurfaceView
      * A handle to a SurfaceTexture managed by this view.
      */
     public final class SurfaceTextureHandle {
-        private final long surfaceId;
+        private final long id;
         private final SurfaceTexture surfaceTexture;
 
-        SurfaceTextureHandle(long surfaceId, SurfaceTexture surfaceTexture) {
-            this.surfaceId = surfaceId;
+        SurfaceTextureHandle(long id, SurfaceTexture surfaceTexture) {
+            this.id = id;
             this.surfaceTexture = surfaceTexture;
             this.surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
                 @Override
                 public void onFrameAvailable(SurfaceTexture texture) {
-                    nativeMarkPlatformSurfaceFrameAvailable(mNativePlatformView, SurfaceTextureHandle.this.surfaceId);
+                    nativeMarkTextureFrameAvailable(mNativePlatformView, SurfaceTextureHandle.this.id);
                 }
             });
         }
@@ -985,16 +985,16 @@ public class FlutterView extends SurfaceView
         /**
          * @return The identity of this handle.
          */
-        public long getSurfaceId() {
-            return surfaceId;
+        public long getId() {
+            return id;
         }
 
         /**
          * Releases the managed SurfaceTexture.
          */
         public void release() {
-            nativeDestroyPlatformSurface(mNativePlatformView, surfaceId);
-            surfaceTextureHandles.remove(surfaceId);
+            nativeDestroyTexture(mNativePlatformView, id);
+            surfaceTextureHandles.remove(id);
             surfaceTexture.release();
         }
     }

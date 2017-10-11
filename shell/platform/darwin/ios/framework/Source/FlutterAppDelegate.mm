@@ -219,10 +219,10 @@
   return nil;
 }
 
-- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry {
+- (NSObject<FlutterTextureRegistry>*)textureRegistry {
   UIViewController* rootViewController = _window.rootViewController;
-  if ([rootViewController conformsToProtocol:@protocol(FlutterPlatformSurfaceRegistry)]) {
-    return (NSObject<FlutterPlatformSurfaceRegistry>*)rootViewController;
+  if ([rootViewController conformsToProtocol:@protocol(FlutterTextureRegistry)]) {
+    return (NSObject<FlutterTextureRegistry>*)rootViewController;
   }
   return nil;
 }
@@ -266,8 +266,8 @@
   return [_appDelegate binaryMessenger];
 }
 
-- (NSObject<FlutterPlatformSurfaceRegistry>*)platformSurfaceRegistry {
-  return [_appDelegate platformSurfaceRegistry];
+- (NSObject<FlutterTextureRegistry>*)textureRegistry {
+  return [_appDelegate textureRegistry];
 }
 
 - (void)publish:(NSObject*)value {

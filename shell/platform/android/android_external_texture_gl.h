@@ -2,20 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef FLUTTER_SHELL_PLATFORM_ANDROID_PLATFORM_SURFACE_GL_H_
-#define FLUTTER_SHELL_PLATFORM_ANDROID_PLATFORM_SURFACE_GL_H_
+#ifndef FLUTTER_SHELL_PLATFORM_ANDROID_EXTERNAL_TEXTURE_GL_H_
+#define FLUTTER_SHELL_PLATFORM_ANDROID_EXTERNAL_TEXTURE_GL_H_
 
-#include "flutter/flow/platform_surface.h"
+#include <GLES/gl.h>
+#include "flutter/flow/texture.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 
 namespace shell {
 
-class AndroidPlatformSurfaceGL : public flow::PlatformSurface {
+class AndroidExternalTextureGL : public flow::Texture {
  public:
-  AndroidPlatformSurfaceGL(
-      const fml::jni::JavaObjectWeakGlobalRef& surface_texture);
+  AndroidExternalTextureGL(
+      const fml::jni::JavaObjectWeakGlobalRef& surfaceTexture);
 
-  ~AndroidPlatformSurfaceGL() override;
+  ~AndroidExternalTextureGL() override;
 
   virtual sk_sp<SkImage> MakeSkImage(int width,
                                      int height,
@@ -29,7 +30,7 @@ class AndroidPlatformSurfaceGL : public flow::PlatformSurface {
   void MarkNewFrameAvailable();
 
  private:
-  void Attach(jint texName);
+  void Attach(jint textureName);
 
   void Update();
 
@@ -43,11 +44,11 @@ class AndroidPlatformSurfaceGL : public flow::PlatformSurface {
 
   bool new_frame_ready_ = false;
 
-  uint32_t texture_id_ = 0;
+  GLuint texture_name_ = 0;
 
-  FXL_DISALLOW_COPY_AND_ASSIGN(AndroidPlatformSurfaceGL);
+  FXL_DISALLOW_COPY_AND_ASSIGN(AndroidExternalTextureGL);
 };
 
 }  // namespace shell
 
-#endif  // FLUTTER_SHELL_PLATFORM_ANDROID_PLATFORM_SURFACE_GL_H_
+#endif  // FLUTTER_SHELL_PLATFORM_ANDROID_EXTERNAL_TEXTURE_GL_H_

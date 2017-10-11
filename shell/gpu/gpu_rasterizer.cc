@@ -79,8 +79,8 @@ flow::LayerTree* GPURasterizer::GetLastLayerTree() {
   return last_layer_tree_.get();
 }
 
-flow::PlatformSurfaceRegistry& GPURasterizer::GetPlatformSurfaceRegistry() {
-  return compositor_context_.platform_surface_registry();
+flow::TextureRegistry& GPURasterizer::GetTextureRegistry() {
+  return compositor_context_.texture_registry();
 }
 
 void GPURasterizer::Draw(

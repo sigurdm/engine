@@ -140,31 +140,27 @@ void PlatformView::HandlePlatformMessage(
     response->CompleteEmpty();
 }
 
-size_t PlatformView::RegisterPlatformSurface(
-    std::shared_ptr<flow::PlatformSurface> surface) {
-  int surface_id;
+size_t PlatformView::RegisterTexture(std::shared_ptr<flow::Texture> texture) {
+  int texture_id;
   fxl::AutoResetWaitableEvent latch;
-  blink::Threads::Gpu()->PostTask([this, &surface_id, &latch, surface]() {
-    surface_id =
-        rasterizer_->GetPlatformSurfaceRegistry().RegisterPlatformSurface(
-            surface);
+  blink::Threads::Gpu()->PostTask([this, &texture_id, &latch, texture]() {
+    texture_id = rasterizer_->GetTextureRegistry().RegisterTexture(texture);
     latch.Signal();
   });
   latch.Wait();
-  return surface_id;
+  return texture_id;
 }
 
-void PlatformView::UnregisterPlatformSurface(size_t surface_id) {
+void PlatformView::UnregisterTexture(size_t texture_id) {
   fxl::AutoResetWaitableEvent latch;
-  blink::Threads::Gpu()->PostTask([this, &latch, surface_id]() {
-    rasterizer_->GetPlatformSurfaceRegistry().UnregisterPlatformSurface(
-        surface_id);
+  blink::Threads::Gpu()->PostTask([this, &latch, texture_id]() {
+    rasterizer_->GetTextureRegistry().UnregisterTexture(texture_id);
     latch.Signal();
   });
   latch.Wait();
 }
 
-void PlatformView::MarkPlatformSurfaceFrameAvailable(size_t surface_id) {
+void PlatformView::MarkTextureFrameAvailable(size_t texture_id) {
   // TODO(mravn, sigurdm): Avoid involving Dart in this.
   ScheduleFrame();
 }

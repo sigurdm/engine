@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/shell/platform/darwin/ios/ios_platform_surface_gl.h"
+#include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
+
 #include "flutter/common/threads.h"
 #include "flutter/lib/ui/painting/resource_context.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
@@ -13,59 +14,59 @@
 
 namespace shell {
 
-IOSPlatformSurfaceGL::~IOSPlatformSurfaceGL() = default;
+IOSExternalTextureGL::~IOSExternalTextureGL() = default;
 
-IOSPlatformSurfaceGL::IOSPlatformSurfaceGL(NSObject<FlutterPlatformSurface>* surface)
-    : surface_(surface) {
-  FXL_DCHECK(surface_);
+IOSExternalTextureGL::IOSExternalTextureGL(NSObject<FlutterTexture>* externalTexture)
+    : external_texture_(externalTexture) {
+  FXL_DCHECK(external_texture_);
 }
 
-sk_sp<SkImage> IOSPlatformSurfaceGL::MakeSkImage(int width, int height, GrContext* grContext) {
+sk_sp<SkImage> IOSExternalTextureGL::MakeSkImage(int width, int height, GrContext* grContext) {
   ASSERT_IS_GPU_THREAD;
-  if (!cacheRef_) {
+  if (!cache_ref_) {
     CVOpenGLESTextureCacheRef cache;
     CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL,
                                                 [EAGLContext currentContext], NULL, &cache);
     if (err == noErr) {
-      cacheRef_.Reset(cache);
+      cache_ref_.Reset(cache);
     } else {
       FXL_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
       return nullptr;
     }
   }
   fml::CFRef<CVPixelBufferRef> bufferRef;
-  bufferRef.Reset([surface_ copyPixelBuffer]);
+  bufferRef.Reset([external_texture_ copyPixelBuffer]);
   if (bufferRef != nullptr) {
     CVOpenGLESTextureRef texture;
     CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(
-        kCFAllocatorDefault, cacheRef_, bufferRef, nullptr, GL_TEXTURE_2D, GL_RGBA,
+        kCFAllocatorDefault, cache_ref_, bufferRef, nullptr, GL_TEXTURE_2D, GL_RGBA,
         static_cast<int>(CVPixelBufferGetWidth(bufferRef)),
         static_cast<int>(CVPixelBufferGetHeight(bufferRef)), GL_BGRA, GL_UNSIGNED_BYTE, 0,
         &texture);
-    textureRef_.Reset(texture);
+    texture_ref_.Reset(texture);
     if (err != noErr) {
       FXL_LOG(WARNING) << "Could not create texture from pixel buffer: " << err;
       return nullptr;
     }
   }
-  if (!textureRef_) {
+  if (!texture_ref_) {
     return nullptr;
   }
-  GrGLTextureInfo textureInfo = {CVOpenGLESTextureGetTarget(textureRef_),
-                                 CVOpenGLESTextureGetName(textureRef_)};
+  GrGLTextureInfo textureInfo = {CVOpenGLESTextureGetTarget(texture_ref_),
+                                 CVOpenGLESTextureGetName(texture_ref_)};
   GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig, textureInfo);
   return SkImage::MakeFromTexture(grContext, backendTexture, kTopLeft_GrSurfaceOrigin,
                                   SkAlphaType::kPremul_SkAlphaType, nullptr);
 }
 
-void IOSPlatformSurfaceGL::OnGrContextCreated() {
+void IOSExternalTextureGL::OnGrContextCreated() {
   ASSERT_IS_GPU_THREAD
 }
 
-void IOSPlatformSurfaceGL::OnGrContextDestroyed() {
+void IOSExternalTextureGL::OnGrContextDestroyed() {
   ASSERT_IS_GPU_THREAD
-  textureRef_.Reset(nullptr);
-  cacheRef_.Reset(nullptr);
+  texture_ref_.Reset(nullptr);
+  cache_ref_.Reset(nullptr);
 }
 
 }  // namespace shell
