@@ -24,13 +24,8 @@ void TextureLayer::Paint(PaintContext& context) {
     FXL_DLOG(WARNING) << "No texture with id: " << texture_id_;
     return;
   }
-  sk_sp<SkImage> sk_image =
-      texture->MakeSkImage(paint_bounds().width(), paint_bounds().height(),
-                           context.canvas.getGrContext());
-  if (!sk_image) {
-    return;
-  }
-  context.canvas.drawImage(sk_image, paint_bounds().x(), paint_bounds().y());
+  texture->DrawOnCanvas(paint_bounds().x(), paint_bounds().y(), paint_bounds().width(), paint_bounds().height(), context.canvas);
+
 }
 
 }  // namespace flow

@@ -29,12 +29,14 @@ void AndroidExternalTextureGL::MarkNewFrameAvailable() {
   new_frame_ready_ = true;
 }
 
-sk_sp<SkImage> AndroidExternalTextureGL::MakeSkImage(int width,
-                                                     int height,
-                                                     GrContext* grContext) {
+void AndroidExternalTextureGL::DrawOnCanvas(int x,
+                                            int y,
+                                            int width,
+                                            int height,
+                                            SkCanvas& canvas) {
   ASSERT_IS_GPU_THREAD;
   if (state_ == AttachmentState::detached) {
-    return nullptr;
+    return;
   }
   if (state_ == AttachmentState::uninitialized) {
     glGenTextures(1, &texture_name_);
@@ -46,11 +48,36 @@ sk_sp<SkImage> AndroidExternalTextureGL::MakeSkImage(int width,
     new_frame_ready_ = false;
   }
   GrGLTextureInfo textureInfo = {GL_TEXTURE_EXTERNAL_OES, texture_name_};
-  GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig,
+  GrBackendTexture backendTexture(1, 1, kRGBA_8888_GrPixelConfig,
                                   textureInfo);
-  return SkImage::MakeFromTexture(grContext, backendTexture,
-                                  kTopLeft_GrSurfaceOrigin,
-                                  SkAlphaType::kPremul_SkAlphaType, nullptr);
+  auto image = SkImage::MakeFromTexture(canvas.getGrContext(), backendTexture,
+                                        kTopLeft_GrSurfaceOrigin,
+                                        SkAlphaType::kPremul_SkAlphaType, nullptr);
+  SkAutoCanvasRestore save(&canvas, true);
+
+  canvas.translate(x, y);
+  float matrix[16];
+  GetTransform(matrix);
+
+  SkMatrix transform = SkMatrix::I();
+  transform.set(0, matrix[0]);
+  transform.set(1, matrix[1]);
+  transform.set(3, matrix[4]);
+  transform.set(4, matrix[5]);
+  transform.preTranslate(-0.5, -0.5);
+  transform.postScale(1.0, -1.0);
+  transform.postTranslate(0.5, 0.5);
+  transform.postScale(width, height);
+
+  canvas.concat(transform);
+  canvas.drawImage(image, 0, 0);
+}
+
+void AndroidExternalTextureGL::GetTransform(float* matrix) {
+  JNIEnv* env = fml::jni::AttachCurrentThread();
+  fml::jni::ScopedJavaLocalRef<jobject> surfaceTexture =
+      surface_texture_.get(env);
+  SurfaceTextureGetTransform(env, surfaceTexture.obj(), matrix);
 }
 
 void AndroidExternalTextureGL::OnGrContextDestroyed() {

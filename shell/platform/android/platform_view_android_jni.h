@@ -33,6 +33,8 @@ void SurfaceTextureAttachToGLContext(JNIEnv* env, jobject obj, jint textureId);
 
 void SurfaceTextureUpdateTexImage(JNIEnv* env, jobject obj);
 
+void SurfaceTextureGetTransform(JNIEnv* env, jobject obj, float* matrix);
+
 void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj);
 
 }  // namespace shell

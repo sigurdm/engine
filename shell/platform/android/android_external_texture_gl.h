@@ -18,9 +18,11 @@ class AndroidExternalTextureGL : public flow::Texture {
 
   ~AndroidExternalTextureGL() override;
 
-  virtual sk_sp<SkImage> MakeSkImage(int width,
-                                     int height,
-                                     GrContext* grContext) override;
+  virtual void DrawOnCanvas(int x,
+                                                int y,
+                                                int width,
+                                                int height,
+                                                SkCanvas &canvas) override;
 
   virtual void OnGrContextCreated() override;
 
@@ -30,6 +32,9 @@ class AndroidExternalTextureGL : public flow::Texture {
   void MarkNewFrameAvailable();
 
  private:
+
+  void GetTransform(float* matrix);
+
   void Attach(jint textureName);
 
   void Update();
