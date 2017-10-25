@@ -8,9 +8,17 @@
 #include "flutter/lib/ui/painting/resource_context.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "third_party/skia/include/core/SkSurface.h"
+// #include "third_party/skia/include/gpu/GrBackendSurface.h"
+#include "third_party/skia/include/gpu/GrTexture.h"
+// #include "third_party/skia/include/gpu/GrTypes.h"
+
+#include "third_party/skia/include/core/SkCanvas.h"
+#include "third_party/skia/include/core/SkSurface.h"
 #include "third_party/skia/include/gpu/GrBackendSurface.h"
+#include "third_party/skia/include/gpu/GrContext.h"
 #include "third_party/skia/include/gpu/GrTexture.h"
 #include "third_party/skia/include/gpu/GrTypes.h"
+
 
 namespace shell {
 
@@ -24,7 +32,11 @@ IOSExternalTextureGL::~IOSExternalTextureGL() {
   [external_texture_ release];
 }
 
-sk_sp<SkImage> IOSExternalTextureGL::MakeSkImage(int width, int height, GrContext* grContext) {
+void IOSExternalTextureGL::DrawOnCanvas(int x,
+                                       int y,
+                                       int width,
+                                       int height,
+                                       SkCanvas& canvas) {
   ASSERT_IS_GPU_THREAD;
   if (!cache_ref_) {
     CVOpenGLESTextureCacheRef cache;
@@ -34,7 +46,7 @@ sk_sp<SkImage> IOSExternalTextureGL::MakeSkImage(int width, int height, GrContex
       cache_ref_.Reset(cache);
     } else {
       FXL_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
-      return nullptr;
+      return;
     }
   }
   fml::CFRef<CVPixelBufferRef> bufferRef;
@@ -49,17 +61,23 @@ sk_sp<SkImage> IOSExternalTextureGL::MakeSkImage(int width, int height, GrContex
     texture_ref_.Reset(texture);
     if (err != noErr) {
       FXL_LOG(WARNING) << "Could not create texture from pixel buffer: " << err;
-      return nullptr;
+      return;
     }
   }
   if (!texture_ref_) {
-    return nullptr;
+    return;
   }
   GrGLTextureInfo textureInfo = {CVOpenGLESTextureGetTarget(texture_ref_),
                                  CVOpenGLESTextureGetName(texture_ref_)};
   GrBackendTexture backendTexture(width, height, kRGBA_8888_GrPixelConfig, textureInfo);
-  return SkImage::MakeFromTexture(grContext, backendTexture, kTopLeft_GrSurfaceOrigin,
-                                  SkAlphaType::kPremul_SkAlphaType, nullptr);
+  auto image = SkImage::MakeFromTexture(
+      canvas.getGrContext(),
+      backendTexture,
+      kTopLeft_GrSurfaceOrigin,
+      SkAlphaType::kPremul_SkAlphaType,
+      nullptr);
+
+  canvas.drawImage(image, x, y);
 }
 
 void IOSExternalTextureGL::OnGrContextCreated() {

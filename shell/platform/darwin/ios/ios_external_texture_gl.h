@@ -22,9 +22,12 @@ class IOSExternalTextureGL : public flow::Texture {
   ~IOSExternalTextureGL() override;
 
   // Called from GPU thread.
-  virtual sk_sp<SkImage> MakeSkImage(int width,
-                                     int height,
-                                     GrContext* grContext) override;
+  virtual void DrawOnCanvas(int x,
+                                                int y,
+                                                int width,
+                                                int height,
+                                                SkCanvas &canvas) override;
+
 
   virtual void OnGrContextCreated() override;
 
