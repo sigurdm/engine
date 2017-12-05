@@ -4,7 +4,8 @@
 
 #include "flutter/shell/platform/android/android_external_texture_gl.h"
 
-// #include <GLES/gl.h>
+#include <GLES/gl.h>
+#include <GLES2/gl2.h>
 #include <GLES/glext.h>
 #include "flutter/common/threads.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
@@ -46,6 +47,8 @@ void AndroidExternalTextureGL::Paint(SkCanvas& canvas, const SkRect& bounds) {
   GrGLTextureInfo textureInfo = {GL_TEXTURE_EXTERNAL_OES, texture_name_};
   GrBackendTexture backendTexture(bounds.width(), bounds.height(),
                                   kRGBA_8888_GrPixelConfig, textureInfo);
+
+
   sk_sp<SkImage> image = SkImage::MakeFromTexture(
       canvas.getGrContext(), backendTexture, kTopLeft_GrSurfaceOrigin,
       SkAlphaType::kPremul_SkAlphaType, nullptr);
