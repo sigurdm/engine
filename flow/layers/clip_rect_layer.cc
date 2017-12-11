@@ -35,6 +35,17 @@ void ClipRectLayer::UpdateScene(SceneUpdateContext& context) {
 
 #endif  // defined(OS_FUCHSIA)
 
+#if defined(OS_IOS)
+
+//void ClipRectLayer::UpdateScene(SceneUpdateContext& context) {
+//  FXL_DCHECK(needs_system_composite());
+//
+//  SceneUpdateContext::ClipRect clipRect(context, clip_rect_);
+//  UpdateSceneChildren(context);
+//}
+
+#endif  // defined(OS_IOS)
+
 void ClipRectLayer::Paint(PaintContext& context) const {
   TRACE_EVENT0("flutter", "ClipRectLayer::Paint");
   FXL_DCHECK(needs_painting());

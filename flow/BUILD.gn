@@ -73,6 +73,13 @@ source_set("flow") {
     "//third_party/skia:gpu",
   ]
 
+  if (is_ios) {
+    sources += [
+#      "scene_update_context_ios.mm",
+#      "scene_update_context_ios.h",
+    ]
+  }
+
   if (is_fuchsia) {
     sources += [
       "export_node.cc",

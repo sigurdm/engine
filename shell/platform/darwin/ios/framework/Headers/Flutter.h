@@ -16,5 +16,6 @@
 #include "FlutterPlugin.h"
 #include "FlutterTexture.h"
 #include "FlutterViewController.h"
+#include "FlutterTestSurface.h"
 
 #endif  // FLUTTER_FLUTTER_H_

@@ -24,6 +24,12 @@
 #include "third_party/skia/include/core/SkRRect.h"
 #include "third_party/skia/include/core/SkRect.h"
 
+#if defined(OS_IOS)
+
+//#include "flutter/flow/scene_update_context_ios.h"
+
+#endif  // defined(OS_IOS)
+
 #if defined(OS_FUCHSIA)
 
 #include "flutter/flow/scene_update_context.h"  //nogncheck
@@ -87,6 +93,11 @@ class Layer {
 #if defined(OS_FUCHSIA)
   // Updates the system composited scene.
   virtual void UpdateScene(SceneUpdateContext& context);
+#endif
+
+#if defined(OS_IOS)
+  // Updates the system composited scene.
+//  virtual void UpdateScene(SceneUpdateContext& context) {}
 #endif
 
   ContainerLayer* parent() const { return parent_; }

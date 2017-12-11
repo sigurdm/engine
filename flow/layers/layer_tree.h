@@ -48,6 +48,10 @@ class LayerTree {
                    scenic_lib::ContainerNode& container);
 #endif
 
+#if defined(OS_IOS)
+  // void UpdateScene(SceneUpdateContext& context) ;
+#endif
+
   void Paint(CompositorContext::ScopedFrame& frame) const;
 
   Layer* root_layer() const { return root_layer_.get(); }

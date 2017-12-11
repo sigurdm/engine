@@ -81,6 +81,27 @@ void LayerTree::UpdateScene(SceneUpdateContext& context,
 }
 #endif
 
+#if defined(OS_IOS)
+//void LayerTree::UpdateScene(SceneUpdateContext& context) {
+//  TRACE_EVENT0("flutter", "LayerTree::UpdateScene");
+//
+//  SceneUpdateContext::Transform transform(context, 1.f / device_pixel_ratio_,
+//                                          1.f / device_pixel_ratio_, 1.f);
+//  SceneUpdateContext::Frame frame(
+//      context,
+//      SkRRect::MakeRect(
+//          SkRect::MakeWH(frame_size_.width(), frame_size_.height())),
+//      SK_ColorTRANSPARENT, 0.f);
+//  if (root_layer_->needs_system_composite()) {
+//    root_layer_->UpdateScene(context);
+//  }
+//  if (root_layer_->needs_painting()) {
+//    frame.AddPaintedLayer(root_layer_.get());
+//  }
+//  container.AddChild(transform.entity_node());
+//}
+#endif
+
 void LayerTree::Paint(CompositorContext::ScopedFrame& frame) const {
   Layer::PaintContext context = {*frame.canvas(),
                                  frame.context().frame_time(),
