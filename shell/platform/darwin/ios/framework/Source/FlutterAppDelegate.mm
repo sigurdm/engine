@@ -129,7 +129,7 @@
     performFetchWithCompletionHandler:completionHandler];
 }
 
-#pragma mark - FlutterPluginRegistry methods. All delegating to th rootViewController
+#pragma mark - FlutterPluginRegistry methods. All delegating to the rootViewController
 
 - (NSObject<FlutterPluginRegistrar>*)registrarForPlugin:(NSString*)pluginKey {
   UIViewController* rootViewController = _window.rootViewController;
